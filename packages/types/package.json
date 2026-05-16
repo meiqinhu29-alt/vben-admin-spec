@@ -10,6 +10,8 @@
   },
   "license": "MIT",
   "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -19,9 +21,18 @@
       "types": "./global.d.ts"
     }
   },
+  "scripts": {
+    "build": "tsup"
+  },
   "dependencies": {
     "@vben-core/typings": "workspace:*",
+    "class-transformer": "catalog:",
+    "class-validator": "catalog:",
     "vue": "catalog:",
     "vue-router": "catalog:"
+  },
+  "devDependencies": {
+    "@vben/tsconfig": "workspace:*",
+    "tsup": "catalog:"
   }
 }
