@@ -1,5 +1,7 @@
 import { IsNotEmpty, IsString, MaxLength, MinLength } from 'class-validator';
 
+import { UserRole } from '../enums/user-role.enum';
+
 export class LoginDto {
   @IsNotEmpty()
   @IsString()
@@ -29,6 +31,6 @@ export interface UserInfoResult {
   id: string;
   username: string;
   displayName: string;
-  role: string;
+  role: UserRole;
   shopIds: string[];
 }
