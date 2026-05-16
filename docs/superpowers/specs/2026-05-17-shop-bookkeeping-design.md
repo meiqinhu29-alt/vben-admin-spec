@@ -20,7 +20,7 @@
 ### 1.2 目标用户
 
 | 角色 | 数据范围 | 主要操作 |
-|------|---------|---------|
+| --- | --- | --- |
 | 员工 (staff) | 所属店铺 | 录入资金日报 |
 | 店长 (manager) | 所辖店铺（员工超集） | 录入 + 查看本店汇总 + 管理店内员工 |
 | 财务 (finance) | 全部 | 审 1 / 反审 1 |
@@ -29,16 +29,16 @@
 
 ### 1.3 MVP 范围
 
-| 模块 | 优先级 |
-|------|--------|
-| 资金日报（录入 + 列表 + 编辑） | 高 |
-| 资金汇总表（多店多期查询） | 高 |
-| 审核管理（审 1 / 审 2 / 反审） | 高 |
-| 店铺管理 | 高 |
-| 品牌管理 | 高 |
-| 用户账号管理（含角色、数据范围） | 高 |
-| 凭证图片上传（按字段） | 中 |
-| 数据导出（Excel） | 中 |
+| 模块                             | 优先级 |
+| -------------------------------- | ------ |
+| 资金日报（录入 + 列表 + 编辑）   | 高     |
+| 资金汇总表（多店多期查询）       | 高     |
+| 审核管理（审 1 / 审 2 / 反审）   | 高     |
+| 店铺管理                         | 高     |
+| 品牌管理                         | 高     |
+| 用户账号管理（含角色、数据范围） | 高     |
+| 凭证图片上传（按字段）           | 中     |
+| 数据导出（Excel）                | 中     |
 
 ---
 
@@ -69,7 +69,7 @@ shop-bookkeeping-monorepo/
 ### 2.3 技术选型
 
 | 维度 | 选型 | 理由 |
-|------|------|------|
+| --- | --- | --- |
 | 前端 | Vue 3 + Naive UI + Pinia | 沿用 vben-admin web-naive 变体 |
 | HTTP 客户端 | vben-admin 的 `requestClient` (axios 封装) | 沿用现有拦截器、token 刷新机制 |
 | 后端框架 | NestJS | 模块化、装饰器、生态完善 |
@@ -111,44 +111,44 @@ daily_funds_reports ─────< audit_logs >──── users
 
 #### `brands` — 品牌
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | uuid | PK |
-| code | string | 品牌代码，unique，如 'KKY' |
-| name | string | 品牌名 |
-| logo_url | string? | 可选 |
-| status | enum | 'active' / 'inactive' |
-| created_at, updated_at | timestamp | |
+| 字段                   | 类型      | 说明                       |
+| ---------------------- | --------- | -------------------------- |
+| id                     | uuid      | PK                         |
+| code                   | string    | 品牌代码，unique，如 'KKY' |
+| name                   | string    | 品牌名                     |
+| logo_url               | string?   | 可选                       |
+| status                 | enum      | 'active' / 'inactive'      |
+| created_at, updated_at | timestamp |                            |
 
 #### `shops` — 店铺
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | id | uuid | PK |
 | code | string | 店铺代码，unique，业务可见 |
 | name | string | 店铺名 |
 | brand_id | uuid | FK → brands |
 | initial_balance | decimal(14,2) | 新店初始余额（解决"第一天没有期初"问题） |
-| address, contact_name, contact_phone | string? | |
+| address, contact_name, contact_phone | string? |  |
 | status | enum | 'active' / 'inactive' |
-| created_at, updated_at | timestamp | |
+| created_at, updated_at | timestamp |  |
 
 #### `users` — 用户账号
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | id | uuid | PK |
 | username | string | unique |
 | password_hash | string | bcrypt |
-| display_name | string | |
+| display_name | string |  |
 | role | enum | 'staff' / 'manager' / 'finance' / 'boss' / 'admin' |
 | status | enum | 'active' / 'disabled' |
-| created_at, updated_at | timestamp | |
+| created_at, updated_at | timestamp |  |
 
 #### `user_shop_access` — 用户数据范围
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
+| 字段    | 类型 | 说明          |
+| ------- | ---- | ------------- |
 | user_id | uuid | FK, PK part 1 |
 | shop_id | uuid | FK, PK part 2 |
 
@@ -158,11 +158,11 @@ daily_funds_reports ─────< audit_logs >──── users
 #### `daily_funds_reports` — 资金日报（核心表）
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | id | uuid | PK |
 | shop_id | uuid | FK → shops |
 | report_date | date | 报表日期 |
-| **公式参与字段** | | |
+| **公式参与字段** |  |  |
 | opening_balance | decimal(14,2) | 期初余额（自动带入或手填） |
 | revenue | decimal(14,2) | 营业额 |
 | card_fee | decimal(14,2) | 卡扣 |
@@ -172,71 +172,71 @@ daily_funds_reports ─────< audit_logs >──── users
 | pay_to_owner | decimal(14,2) | 交给店老板款 |
 | shop_expense | decimal(14,2) | 店铺费用 |
 | closing_balance | decimal(14,2) | 期末余额（按公式计算） |
-| **扩展字段（默认不入余额公式，待业务方确认）** | | |
+| **扩展字段（默认不入余额公式，待业务方确认）** |  |  |
 | topup_income | decimal(14,2) | 充值收入 |
 | mall_settlement | decimal(14,2) | 商场收款 |
 | other_company_income | decimal(14,2) | 公司其它收入 |
 | company_to_owner | decimal(14,2) | 公司转店老板 |
 | card_payment | decimal(14,2) | 刷卡收款 |
 | company_bonus | decimal(14,2) | 公司奖励 |
-| **元数据** | | |
+| **元数据** |  |  |
 | remark | string? | 备注 |
 | status | enum | 'pending' / 'audited' / 'locked' |
 | created_by | uuid | FK → users |
 | audited_by | uuid? | 审 1 操作人 |
-| audited_at | timestamp? | |
+| audited_at | timestamp? |  |
 | locked_by | uuid? | 审 2 操作人 |
-| locked_at | timestamp? | |
-| created_at, updated_at | timestamp | |
+| locked_at | timestamp? |  |
+| created_at, updated_at | timestamp |  |
 
 **唯一约束**：`(shop_id, report_date)` — 同店同日不可重复
 
 #### `report_attachments` — 凭证图片
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | uuid | PK |
-| report_id | uuid | FK → daily_funds_reports |
-| field_name | string | 'revenue' / 'transfer_to_company' / ... |
-| url | string | 完整 URL 或对象存储 key |
-| file_name | string | |
-| file_size | integer | bytes |
-| uploaded_by | uuid | FK → users |
-| uploaded_at | timestamp | |
-| deleted_at | timestamp? | 软删除 |
+| 字段        | 类型       | 说明                                    |
+| ----------- | ---------- | --------------------------------------- |
+| id          | uuid       | PK                                      |
+| report_id   | uuid       | FK → daily_funds_reports                |
+| field_name  | string     | 'revenue' / 'transfer_to_company' / ... |
+| url         | string     | 完整 URL 或对象存储 key                 |
+| file_name   | string     |                                         |
+| file_size   | integer    | bytes                                   |
+| uploaded_by | uuid       | FK → users                              |
+| uploaded_at | timestamp  |                                         |
+| deleted_at  | timestamp? | 软删除                                  |
 
 #### `audit_logs` — 审核与操作日志
 
 | 字段 | 类型 | 说明 |
-|------|------|------|
+| --- | --- | --- |
 | id | uuid | PK |
 | report_id | uuid | FK |
 | operator_id | uuid | FK |
 | action | enum | 'submit' / 'edit' / 'audit' / 'reject' / 'lock' / 'unlock' / 'delete' |
-| from_status | string? | |
-| to_status | string? | |
+| from_status | string? |  |
+| to_status | string? |  |
 | diff | jsonb? | 字段修改的 before/after |
-| comment | string? | |
-| created_at | timestamp | |
+| comment | string? |  |
+| created_at | timestamp |  |
 
 **保留期**：永久。
 
 #### `refresh_tokens` — 刷新令牌（认证基础设施）
 
-| 字段 | 类型 | 说明 |
-|------|------|------|
-| id | uuid | PK |
-| user_id | uuid | FK → users |
-| token_hash | string | bcrypt(refresh_token)，防泄漏 |
-| expires_at | timestamp | |
-| revoked_at | timestamp? | logout 时标记 |
-| created_at | timestamp | |
-| user_agent, ip | string? | 审计用 |
+| 字段           | 类型       | 说明                          |
+| -------------- | ---------- | ----------------------------- |
+| id             | uuid       | PK                            |
+| user_id        | uuid       | FK → users                    |
+| token_hash     | string     | bcrypt(refresh_token)，防泄漏 |
+| expires_at     | timestamp  |                               |
+| revoked_at     | timestamp? | logout 时标记                 |
+| created_at     | timestamp  |                               |
+| user_agent, ip | string?    | 审计用                        |
 
 ### 3.3 期初余额处理策略
 
 | 场景 | 策略 |
-|------|------|
+| --- | --- |
 | 新店第一条 | 取 `shops.initial_balance` |
 | 正常情况 | 取该店「上一个有记录日期」的 `closing_balance` |
 | 漏报一天 | 取最近一次记录的期末余额（不强制连续） |
@@ -249,6 +249,7 @@ daily_funds_reports ─────< audit_logs >──── users
 MVP 阶段：6 个扩展字段**不参与**期末余额公式，仅作信息记录。
 
 公式：
+
 ```
 actual_revenue  = revenue − card_fee
 closing_balance = opening_balance + actual_revenue − transfer_to_company − deposit_to_company − pay_to_owner − shop_expense
@@ -335,11 +336,11 @@ src/
 
 ### 4.4 集中原则
 
-| 集中处 | 内容 |
-|--------|------|
-| `balance-calculator.service.ts` | 余额计算公式（**唯一**） |
-| `audit.service.ts` | 状态机（**唯一**变更 status 的入口） |
-| `data-scope.guard.ts` | 数据范围过滤（业务 service 不需要关心） |
+| 集中处                          | 内容                                    |
+| ------------------------------- | --------------------------------------- |
+| `balance-calculator.service.ts` | 余额计算公式（**唯一**）                |
+| `audit.service.ts`              | 状态机（**唯一**变更 status 的入口）    |
+| `data-scope.guard.ts`           | 数据范围过滤（业务 service 不需要关心） |
 
 ### 4.5 基础设施模块（从 mock 后端迁移）
 
@@ -350,7 +351,7 @@ vben-admin 现有的 `apps/backend-mock/` 实现了一套基础设施 API，前�
 **auth 模块**：
 
 | 端点 | 方法 | 用途 | 依赖表 |
-|------|------|------|--------|
+| --- | --- | --- | --- |
 | `/api/auth/login` | POST | 用户登录，返回 access token + refresh token | users |
 | `/api/auth/logout` | POST | 注销当前会话 | refresh_tokens |
 | `/api/auth/refresh` | POST | 用 refresh token 换新的 access token | refresh_tokens |
@@ -359,7 +360,7 @@ vben-admin 现有的 `apps/backend-mock/` 实现了一套基础设施 API，前�
 **users 模块**：
 
 | 端点 | 方法 | 用途 | 依赖表 |
-|------|------|------|--------|
+| --- | --- | --- | --- |
 | `/api/user/info` | GET | 获取当前登录用户的信息（含 role、shopIds） | users + user_shop_access |
 | `/api/users` | GET/POST | 用户列表 + 创建（admin） | users |
 | `/api/users/:id` | GET/PUT/DELETE | 用户详情 + 修改 + 软删除 | users |
@@ -368,14 +369,14 @@ vben-admin 现有的 `apps/backend-mock/` 实现了一套基础设施 API，前�
 
 **menu 模块**：
 
-| 端点 | 方法 | 用途 | 依赖 |
-|------|------|------|------|
-| `/api/menu/all` | GET | 返回当前用户可访问的菜单树 | 硬编码（按角色） |
+| 端点            | 方法 | 用途                       | 依赖             |
+| --------------- | ---- | -------------------------- | ---------------- |
+| `/api/menu/all` | GET  | 返回当前用户可访问的菜单树 | 硬编码（按角色） |
 
 **attachments 模块**：
 
 | 端点 | 方法 | 用途 | 依赖表 |
-|------|------|------|--------|
+| --- | --- | --- | --- |
 | `/api/upload` | POST | 通用文件上传，返回 fileId + url | report_attachments + OSS/MinIO |
 | `/api/attachments/:id` | DELETE | 软删除附件 | report_attachments |
 
@@ -384,7 +385,7 @@ vben-admin 现有的 `apps/backend-mock/` 实现了一套基础设施 API，前�
 vben-admin mock 支持运营人员通过 UI 维护菜单和角色，我们**不做**这部分：
 
 | 能力 | 决策 | 理由 |
-|------|------|------|
+| --- | --- | --- |
 | 动态菜单管理（菜单 CRUD UI） | ❌ 不做 | 商城后台菜单固定（约 5-7 个一级菜单），硬编码 + 按角色映射即可 |
 | 动态角色管理（角色 CRUD UI） | ❌ 不做 | 5 个角色固定，写死在 enum |
 | 动态权限码管理 | ❌ 不做 | 权限码硬编码在代码里，按角色返回不同集合 |
@@ -397,20 +398,27 @@ vben-admin mock 支持运营人员通过 UI 维护菜单和角色，我们**不�
 // apps/backend/src/modules/auth/menu-permissions.config.ts
 
 export const MENU_BY_ROLE: Record<UserRole, string[]> = {
-  staff:   ['dashboard', 'finance.daily'],
+  staff: ['dashboard', 'finance.daily'],
   manager: ['dashboard', 'finance.daily', 'finance.summary'],
   finance: ['dashboard', 'finance.daily', 'finance.summary', 'finance.audit'],
-  boss:    ['dashboard', 'finance.daily', 'finance.summary', 'finance.audit'],
-  admin:   ['dashboard', 'finance.daily', 'finance.summary', 'finance.audit',
-            'system.shops', 'system.brands', 'system.users'],
+  boss: ['dashboard', 'finance.daily', 'finance.summary', 'finance.audit'],
+  admin: [
+    'dashboard',
+    'finance.daily',
+    'finance.summary',
+    'finance.audit',
+    'system.shops',
+    'system.brands',
+    'system.users',
+  ],
 };
 
 export const CODES_BY_ROLE: Record<UserRole, string[]> = {
-  staff:   ['report:create', 'report:edit:own_pending'],
+  staff: ['report:create', 'report:edit:own_pending'],
   manager: [...CODES_BY_ROLE.staff, 'staff:manage', 'shop:read:own'],
   finance: ['report:read:all', 'report:audit_1', 'report:reject_1'],
-  boss:    ['report:read:all', 'report:audit_2'],
-  admin:   ['*'],
+  boss: ['report:read:all', 'report:audit_2'],
+  admin: ['*'],
 };
 ```
 
@@ -536,25 +544,25 @@ export enum ErrorCode {
 
 ### 6.3 关键边界
 
-| 场景 | 处理 |
-|------|------|
-| 同店同日重复创建 | DB unique + service 抛 `REPORT_DUPLICATE` |
-| 期初余额取不到 | 抛 `OPENING_BALANCE_NOT_AVAILABLE`，提示先填上一日 |
-| 删除已审/锁定 | 拒绝；需先反审 |
-| 删除有日报的店铺 | 软删除（`status='inactive'`），保留历史 |
-| 凭证上传中断 | 落 OSS 临时桶，24h 未关联清理 |
-| 级联重算 | 单店单月最多 31 条；事务批量 update |
-| 跨年汇总 | 索引 `(shop_id, report_date)`；最多 1 年范围 |
-| 大量导出 | 异步任务，WebSocket 通知下载 |
+| 场景             | 处理                                               |
+| ---------------- | -------------------------------------------------- |
+| 同店同日重复创建 | DB unique + service 抛 `REPORT_DUPLICATE`          |
+| 期初余额取不到   | 抛 `OPENING_BALANCE_NOT_AVAILABLE`，提示先填上一日 |
+| 删除已审/锁定    | 拒绝；需先反审                                     |
+| 删除有日报的店铺 | 软删除（`status='inactive'`），保留历史            |
+| 凭证上传中断     | 落 OSS 临时桶，24h 未关联清理                      |
+| 级联重算         | 单店单月最多 31 条；事务批量 update                |
+| 跨年汇总         | 索引 `(shop_id, report_date)`；最多 1 年范围       |
+| 大量导出         | 异步任务，WebSocket 通知下载                       |
 
 ### 6.4 校验策略（双层）
 
-| 校验项 | 前端 | 后端 |
-|-------|------|------|
-| 必填、数值非负、日期不未来 | ✅ form 实时 | ✅ class-validator |
-| 期末余额公式 | 预览 | ✅ 唯一计算源 |
-| 数据范围 | 隐藏不可选 | ✅ Guard 强制（最终防线） |
-| 状态合法 | 隐藏按钮 | ✅ 状态机校验 |
+| 校验项                     | 前端         | 后端                      |
+| -------------------------- | ------------ | ------------------------- |
+| 必填、数值非负、日期不未来 | ✅ form 实时 | ✅ class-validator        |
+| 期末余额公式               | 预览         | ✅ 唯一计算源             |
+| 数据范围                   | 隐藏不可选   | ✅ Guard 强制（最终防线） |
+| 状态合法                   | 隐藏按钮     | ✅ 状态机校验             |
 
 ---
 
@@ -571,11 +579,13 @@ export enum ErrorCode {
 ### 7.2 重点覆盖
 
 **单元测试（必须 100%）**：
+
 - `balance-calculator.service` — 各种输入组合，含 6 扩展字段两种假设
 - `audit.service` — 状态机所有合法/非法转换
 - 数据范围 Guard（mock 用户）
 
 **集成测试（真 DB）**：
+
 - 同店同日唯一约束
 - 级联重算事务一致性
 - 软删除策略
@@ -583,6 +593,7 @@ export enum ErrorCode {
 - 角色 + 数据范围的 SQL 实际过滤效果
 
 **E2E 核心旅程**：
+
 1. 员工录入 → 上传凭证 → 提交
 2. 财务审 1
 3. 老板审 2 锁定
@@ -597,8 +608,8 @@ jobs:
   - check:type
   - lint
   - test:unit
-  - test:integration  # 起 PostgreSQL container
-  - test:e2e          # 起前后端 + DB
+  - test:integration # 起 PostgreSQL container
+  - test:e2e # 起前后端 + DB
   - build
 ```
 
@@ -610,12 +621,12 @@ jobs:
 
 ### 7.5 覆盖率目标
 
-| 范围 | 目标 |
-|------|------|
+| 范围             | 目标 |
+| ---------------- | ---- |
 | 余额计算、状态机 | 100% |
-| Service 层 | 80%+ |
-| Controller 层 | 70%+ |
-| 前端关键组件 | 60%+ |
+| Service 层       | 80%+ |
+| Controller 层    | 70%+ |
+| 前端关键组件     | 60%+ |
 
 ---
 
@@ -641,7 +652,7 @@ jobs:
 ## 9. 实施路线图（高层）
 
 | 阶段 | 内容 | 估计周期 |
-|------|------|----------|
+| --- | --- | --- |
 | **P0** 基础设施 | monorepo 配置、NestJS 初始化、Prisma + DB、packages/types | 1 周 |
 | **P1** 认证 + 用户 | 登录、JWT、用户 CRUD、RBAC Guard、数据范围 Guard | 1 周 |
 | **P2** 基础数据 | 品牌、店铺管理 + 前端页面 | 1 周 |
@@ -650,7 +661,7 @@ jobs:
 | **P5** 凭证上传 | 字段级附件、OSS/MinIO 集成 | 0.5 周 |
 | **P6** 汇总与导出 | 资金汇总表 + Excel 导出 | 0.5 周 |
 | **P7** 联调测试 | E2E、性能、上线准备 | 1 周 |
-| **总计** | | ~8 周 |
+| **总计** |  | ~8 周 |
 
 ---
 

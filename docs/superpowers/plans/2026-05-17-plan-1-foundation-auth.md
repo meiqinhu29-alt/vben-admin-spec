@@ -78,6 +78,7 @@ CLAUDE.md                追加后端命令
 ## Task 1: 添加 packages/types 共享类型包
 
 **Files:**
+
 - Create: `packages/types/package.json`
 - Create: `packages/types/tsconfig.json`
 - Create: `packages/types/tsup.config.ts`
@@ -232,9 +233,7 @@ export * from './api/response';
 
 - [ ] **Step 9: 安装并验证**
 
-Run: `pnpm install`
-Run: `cd packages/types && pnpm run build`
-Expected: `packages/types/dist/` 包含 `.js` `.cjs` `.d.ts`
+Run: `pnpm install` Run: `cd packages/types && pnpm run build` Expected: `packages/types/dist/` 包含 `.js` `.cjs` `.d.ts`
 
 - [ ] **Step 10: 提交**
 
@@ -248,6 +247,7 @@ git commit -m "feat(types): scaffold @vben/types shared DTO/enum package"
 ## Task 2: docker-compose.dev.yml（PostgreSQL + MinIO）
 
 **Files:**
+
 - Create: `docker-compose.dev.yml`
 - Create: `.env.example`
 
@@ -285,11 +285,11 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-vben_dev_pwd}
       POSTGRES_DB: ${POSTGRES_DB:-shop_bookkeeping}
     ports:
-      - "${POSTGRES_PORT:-5432}:5432"
+      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-vben}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-vben}']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -301,8 +301,8 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_dev_pwd}
     ports:
-      - "${MINIO_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - '${MINIO_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
@@ -314,10 +314,7 @@ volumes:
 
 - [ ] **Step 3: 启动并验证**
 
-Run: `cp .env.example .env`
-Run: `docker compose -f docker-compose.dev.yml up -d`
-Run: `docker compose -f docker-compose.dev.yml ps`
-Expected: postgres + minio 状态为 `Up` 或 `Up (healthy)`
+Run: `cp .env.example .env` Run: `docker compose -f docker-compose.dev.yml up -d` Run: `docker compose -f docker-compose.dev.yml ps` Expected: postgres + minio 状态为 `Up` 或 `Up (healthy)`
 
 - [ ] **Step 4: 提交**
 
@@ -331,6 +328,7 @@ git commit -m "chore(docker): add dev compose for postgres + minio"
 ## Task 3: NestJS 后端骨架
 
 **Files:**
+
 - Create: `apps/backend/package.json`
 - Create: `apps/backend/tsconfig.json`
 - Create: `apps/backend/nest-cli.json`
@@ -532,10 +530,7 @@ export class AppModule {}
 
 - [ ] **Step 9: 启动验证**
 
-Run: `pnpm install`
-Run: `cp apps/backend/.env.example apps/backend/.env`
-Run: `pnpm dev:backend`
-Expected: 控制台打印 `Backend listening on http://localhost:3100/api`，按 Ctrl+C 停止。
+Run: `pnpm install` Run: `cp apps/backend/.env.example apps/backend/.env` Run: `pnpm dev:backend` Expected: 控制台打印 `Backend listening on http://localhost:3100/api`，按 Ctrl+C 停止。
 
 - [ ] **Step 10: 提交**
 
@@ -549,6 +544,7 @@ git commit -m "feat(backend): scaffold NestJS app with health bootstrap"
 ## Task 4: Prisma + 初始 schema
 
 **Files:**
+
 - Create: `apps/backend/prisma/schema.prisma`
 - Create: `apps/backend/prisma/seed.ts`
 - Create: `apps/backend/src/prisma/prisma.service.ts`
@@ -627,11 +623,9 @@ model UserShopAccess {
 
 - [ ] **Step 2: 生成 Prisma Client 并运行迁移**
 
-Run: `cd apps/backend && pnpm prisma:generate`
-Expected: 生成 `node_modules/@prisma/client`
+Run: `cd apps/backend && pnpm prisma:generate` Expected: 生成 `node_modules/@prisma/client`
 
-Run: `pnpm prisma:migrate:dev --name init`
-Expected: 数据库出现 3 张表，并在 `prisma/migrations/<ts>_init/migration.sql` 记录
+Run: `pnpm prisma:migrate:dev --name init` Expected: 数据库出现 3 张表，并在 `prisma/migrations/<ts>_init/migration.sql` 记录
 
 - [ ] **Step 3: 创建 apps/backend/src/prisma/prisma.service.ts**
 
@@ -717,11 +711,9 @@ main()
 
 - [ ] **Step 6: 跑种子并验证**
 
-Run: `cd apps/backend && pnpm prisma:seed`
-Expected: 控制台打印 `Seeded admin user`
+Run: `cd apps/backend && pnpm prisma:seed` Expected: 控制台打印 `Seeded admin user`
 
-Run: `docker exec -it vben_pg_dev psql -U vben -d shop_bookkeeping -c "SELECT username, role FROM users;"`
-Expected: 返回 `admin | admin` 一行
+Run: `docker exec -it vben_pg_dev psql -U vben -d shop_bookkeeping -c "SELECT username, role FROM users;"` Expected: 返回 `admin | admin` 一行
 
 - [ ] **Step 7: 提交**
 
@@ -735,6 +727,7 @@ git commit -m "feat(backend): add Prisma schema for users/refresh_tokens/user_sh
 ## Task 5: UsersService（密码校验）+ 单元测试
 
 **Files:**
+
 - Create: `apps/backend/src/modules/users/users.module.ts`
 - Create: `apps/backend/src/modules/users/users.service.ts`
 - Create: `apps/backend/src/modules/users/users.service.spec.ts`
@@ -795,15 +788,16 @@ describe('UsersService.verifyPasswordByUsername', () => {
       passwordHash,
       status: 'disabled',
     });
-    expect(await service.verifyPasswordByUsername('alice', 'correct')).toBeNull();
+    expect(
+      await service.verifyPasswordByUsername('alice', 'correct'),
+    ).toBeNull();
   });
 });
 ```
 
 - [ ] **Step 2: 跑测试确认失败**
 
-Run: `cd apps/backend && pnpm test:unit src/modules/users/users.service.spec.ts`
-Expected: FAIL（找不到 UsersService）
+Run: `cd apps/backend && pnpm test:unit src/modules/users/users.service.spec.ts` Expected: FAIL（找不到 UsersService）
 
 - [ ] **Step 3: 创建 apps/backend/src/modules/users/users.service.ts**
 
@@ -854,8 +848,7 @@ export class UsersModule {}
 
 - [ ] **Step 5: 跑测试确认通过**
 
-Run: `cd apps/backend && pnpm test:unit src/modules/users/users.service.spec.ts`
-Expected: 4 个测试 PASS
+Run: `cd apps/backend && pnpm test:unit src/modules/users/users.service.spec.ts` Expected: 4 个测试 PASS
 
 - [ ] **Step 6: 在 AppModule 注册 UsersModule**
 
@@ -887,6 +880,7 @@ git commit -m "feat(backend): add UsersService with password verification"
 ## Task 6: AuthService（颁发 + 刷新 + 撤销 token）
 
 **Files:**
+
 - Create: `apps/backend/src/modules/auth/auth.service.ts`
 - Create: `apps/backend/src/modules/auth/auth.service.spec.ts`
 - Create: `apps/backend/src/modules/auth/auth.module.ts`
@@ -945,7 +939,9 @@ describe('AuthService.login', () => {
 
   it('throws UnauthorizedException when password incorrect', async () => {
     usersServiceMock.verifyPasswordByUsername.mockResolvedValue(null);
-    await expect(service.login('alice', 'bad')).rejects.toThrow(UnauthorizedException);
+    await expect(service.login('alice', 'bad')).rejects.toThrow(
+      UnauthorizedException,
+    );
   });
 
   it('returns tokens when login succeeds', async () => {
@@ -969,8 +965,7 @@ describe('AuthService.login', () => {
 
 - [ ] **Step 2: 跑测试确认失败**
 
-Run: `cd apps/backend && pnpm test:unit src/modules/auth/auth.service.spec.ts`
-Expected: FAIL（AuthService 未定义）
+Run: `cd apps/backend && pnpm test:unit src/modules/auth/auth.service.spec.ts` Expected: FAIL（AuthService 未定义）
 
 - [ ] **Step 3: 创建 apps/backend/src/modules/auth/auth.service.ts**
 
@@ -1024,7 +1019,8 @@ export class AuthService {
     if (!ok) throw new UnauthorizedException('Refresh token mismatch');
 
     const user = await this.users.findById(payload.sub);
-    if (!user || user.status !== 'active') throw new UnauthorizedException('User inactive');
+    if (!user || user.status !== 'active')
+      throw new UnauthorizedException('User inactive');
 
     // 旋转：撤销旧 token，颁发新的
     await this.prisma.refreshToken.update({
@@ -1041,7 +1037,11 @@ export class AuthService {
     });
   }
 
-  private async issueTokens(user: { id: string; username: string; role: string }) {
+  private async issueTokens(user: {
+    id: string;
+    username: string;
+    role: string;
+  }) {
     const payload: JwtPayload = {
       sub: user.id,
       username: user.username,
@@ -1076,8 +1076,7 @@ export class AuthService {
 
 - [ ] **Step 4: 跑测试确认通过**
 
-Run: `cd apps/backend && pnpm test:unit src/modules/auth/auth.service.spec.ts`
-Expected: 2 个测试 PASS
+Run: `cd apps/backend && pnpm test:unit src/modules/auth/auth.service.spec.ts` Expected: 2 个测试 PASS
 
 - [ ] **Step 5: 创建 apps/backend/src/modules/auth/auth.module.ts**
 
@@ -1115,11 +1114,7 @@ import { PrismaService } from './prisma/prisma.service';
 
 @Global()
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    UsersModule,
-    AuthModule,
-  ],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), UsersModule, AuthModule],
   providers: [PrismaService],
   exports: [PrismaService],
 })
@@ -1138,6 +1133,7 @@ git commit -m "feat(backend): implement AuthService with login/refresh/logout to
 ## Task 7: JwtStrategy + JwtAuthGuard + 装饰器
 
 **Files:**
+
 - Create: `apps/backend/src/common/decorators/public.decorator.ts`
 - Create: `apps/backend/src/common/decorators/current-user.decorator.ts`
 - Create: `apps/backend/src/common/guards/jwt-auth.guard.ts`
@@ -1284,15 +1280,8 @@ import { PrismaService } from './prisma/prisma.service';
 
 @Global()
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    UsersModule,
-    AuthModule,
-  ],
-  providers: [
-    PrismaService,
-    { provide: APP_GUARD, useClass: JwtAuthGuard },
-  ],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), UsersModule, AuthModule],
+  providers: [PrismaService, { provide: APP_GUARD, useClass: JwtAuthGuard }],
   exports: [PrismaService],
 })
 export class AppModule {}
@@ -1310,6 +1299,7 @@ git commit -m "feat(backend): add global JwtAuthGuard with @Public escape hatch"
 ## Task 8: AuthController + 集成测试
 
 **Files:**
+
 - Create: `apps/backend/src/modules/auth/auth.controller.ts`
 - Create: `apps/backend/vitest.integration.config.ts`
 - Create: `apps/backend/test/setup.ts`
@@ -1445,9 +1435,7 @@ export async function createTestApp(): Promise<{
   }).compile();
 
   const app = moduleRef.createNestApplication();
-  app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, transform: true }),
-  );
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.setGlobalPrefix('api');
   await app.init();
 
@@ -1547,8 +1535,7 @@ describe('Auth (e2e)', () => {
       .post('/api/auth/refresh')
       .send({ refreshToken });
     expect(res.status).toBe(200);
-    const newRefresh =
-      res.body.refreshToken ?? res.body.data?.refreshToken;
+    const newRefresh = res.body.refreshToken ?? res.body.data?.refreshToken;
     expect(newRefresh).toBeDefined();
     expect(newRefresh).not.toBe(refreshToken); // 旋转
   });
@@ -1559,8 +1546,7 @@ describe('Auth (e2e)', () => {
 
 - [ ] **Step 8: 跑集成测试**
 
-Run: `cd apps/backend && pnpm test:integration`
-Expected: 5 个测试 PASS
+Run: `cd apps/backend && pnpm test:integration` Expected: 5 个测试 PASS
 
 如果连接失败，确认开发库已起且测试库已建好。如果断言失败，看错误信息确认响应结构（此时还没 ResponseInterceptor）。
 
@@ -1576,6 +1562,7 @@ git commit -m "feat(backend): add /auth login/refresh/logout endpoints with e2e 
 ## Task 9: 菜单 + 权限码端点
 
 **Files:**
+
 - Create: `apps/backend/src/modules/auth/menu-permissions.config.ts`
 - Create: `apps/backend/src/modules/auth/menu.service.ts`
 - Create: `apps/backend/src/modules/auth/menu.controller.ts`
@@ -1596,20 +1583,65 @@ export interface MenuItem {
 }
 
 const ALL_MENUS: Record<string, MenuItem> = {
-  dashboard: { key: 'dashboard', name: '首页', path: '/dashboard', icon: 'lucide:home' },
-  'finance.daily': { key: 'finance.daily', name: '资金日报', path: '/finance/daily', icon: 'lucide:notebook-pen' },
-  'finance.summary': { key: 'finance.summary', name: '资金汇总表', path: '/finance/summary', icon: 'lucide:layout-grid' },
-  'finance.audit': { key: 'finance.audit', name: '审核管理', path: '/finance/audit', icon: 'lucide:check-circle' },
-  'system.shops': { key: 'system.shops', name: '店铺管理', path: '/system/shops', icon: 'lucide:store' },
-  'system.brands': { key: 'system.brands', name: '品牌管理', path: '/system/brands', icon: 'lucide:tag' },
-  'system.users': { key: 'system.users', name: '用户账号', path: '/system/users', icon: 'lucide:users' },
+  dashboard: {
+    key: 'dashboard',
+    name: '首页',
+    path: '/dashboard',
+    icon: 'lucide:home',
+  },
+  'finance.daily': {
+    key: 'finance.daily',
+    name: '资金日报',
+    path: '/finance/daily',
+    icon: 'lucide:notebook-pen',
+  },
+  'finance.summary': {
+    key: 'finance.summary',
+    name: '资金汇总表',
+    path: '/finance/summary',
+    icon: 'lucide:layout-grid',
+  },
+  'finance.audit': {
+    key: 'finance.audit',
+    name: '审核管理',
+    path: '/finance/audit',
+    icon: 'lucide:check-circle',
+  },
+  'system.shops': {
+    key: 'system.shops',
+    name: '店铺管理',
+    path: '/system/shops',
+    icon: 'lucide:store',
+  },
+  'system.brands': {
+    key: 'system.brands',
+    name: '品牌管理',
+    path: '/system/brands',
+    icon: 'lucide:tag',
+  },
+  'system.users': {
+    key: 'system.users',
+    name: '用户账号',
+    path: '/system/users',
+    icon: 'lucide:users',
+  },
 };
 
 export const MENU_KEYS_BY_ROLE: Record<UserRole, string[]> = {
   [UserRole.Staff]: ['dashboard', 'finance.daily'],
   [UserRole.Manager]: ['dashboard', 'finance.daily', 'finance.summary'],
-  [UserRole.Finance]: ['dashboard', 'finance.daily', 'finance.summary', 'finance.audit'],
-  [UserRole.Boss]: ['dashboard', 'finance.daily', 'finance.summary', 'finance.audit'],
+  [UserRole.Finance]: [
+    'dashboard',
+    'finance.daily',
+    'finance.summary',
+    'finance.audit',
+  ],
+  [UserRole.Boss]: [
+    'dashboard',
+    'finance.daily',
+    'finance.summary',
+    'finance.audit',
+  ],
   [UserRole.Admin]: [
     'dashboard',
     'finance.daily',
@@ -1684,8 +1716,7 @@ describe('Menu permission config', () => {
 
 - [ ] **Step 3: 跑测试**
 
-Run: `cd apps/backend && pnpm test:unit src/modules/auth/menu.service.spec.ts`
-Expected: 4 个测试 PASS
+Run: `cd apps/backend && pnpm test:unit src/modules/auth/menu.service.spec.ts` Expected: 4 个测试 PASS
 
 - [ ] **Step 4: 创建 apps/backend/src/modules/auth/menu.service.ts**
 
@@ -1781,6 +1812,7 @@ git commit -m "feat(backend): add /menu/all and /auth/codes endpoints with role-
 ## Task 10: UsersController（/user/info）+ 集成测试
 
 **Files:**
+
 - Create: `apps/backend/src/modules/users/users.controller.ts`
 - Create: `apps/backend/test/integration/users.e2e-spec.ts`
 - Modify: `apps/backend/src/modules/users/users.module.ts`
@@ -1912,8 +1944,7 @@ describe('User info / menu / codes (e2e)', () => {
 
 - [ ] **Step 4: 跑全部集成测试**
 
-Run: `cd apps/backend && pnpm test:integration`
-Expected: 5 (auth) + 4 (users) = 9 个测试 PASS
+Run: `cd apps/backend && pnpm test:integration` Expected: 5 (auth) + 4 (users) = 9 个测试 PASS
 
 - [ ] **Step 5: 提交**
 
@@ -1927,6 +1958,7 @@ git commit -m "feat(backend): add /user/info endpoint and e2e tests for user/men
 ## Task 11: 统一响应格式 + 全局异常过滤器
 
 **Files:**
+
 - Create: `apps/backend/src/common/interceptors/response.interceptor.ts`
 - Create: `apps/backend/src/common/filters/http-exception.filter.ts`
 - Modify: `apps/backend/src/main.ts`
@@ -2068,9 +2100,7 @@ export async function createTestApp(): Promise<{
   }).compile();
 
   const app = moduleRef.createNestApplication();
-  app.useGlobalPipes(
-    new ValidationPipe({ whitelist: true, transform: true }),
-  );
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   app.setGlobalPrefix('api');
   app.useGlobalInterceptors(new ResponseInterceptor());
   app.useGlobalFilters(new HttpExceptionFilter());
@@ -2107,8 +2137,7 @@ expect(res.body.data.accessToken).toBeDefined();
 
 - [ ] **Step 6: 跑全部集成测试**
 
-Run: `cd apps/backend && pnpm test:integration`
-Expected: 9 个测试 PASS（响应都带 `data` 包装）
+Run: `cd apps/backend && pnpm test:integration` Expected: 9 个测试 PASS（响应都带 `data` 包装）
 
 - [ ] **Step 7: 提交**
 
@@ -2122,6 +2151,7 @@ git commit -m "feat(backend): wire global response interceptor + exception filte
 ## Task 12: RolesGuard + @Roles 装饰器
 
 **Files:**
+
 - Create: `apps/backend/src/common/decorators/roles.decorator.ts`
 - Create: `apps/backend/src/common/guards/roles.guard.ts`
 - Create: `apps/backend/src/common/guards/roles.guard.spec.ts`
@@ -2193,8 +2223,7 @@ describe('RolesGuard', () => {
 
 - [ ] **Step 3: 跑测试确认失败**
 
-Run: `cd apps/backend && pnpm test:unit src/common/guards/roles.guard.spec.ts`
-Expected: FAIL（RolesGuard 未定义）
+Run: `cd apps/backend && pnpm test:unit src/common/guards/roles.guard.spec.ts` Expected: FAIL（RolesGuard 未定义）
 
 - [ ] **Step 4: 创建 apps/backend/src/common/guards/roles.guard.ts**
 
@@ -2226,8 +2255,7 @@ export class RolesGuard implements CanActivate {
 
 - [ ] **Step 5: 跑测试确认通过**
 
-Run: `cd apps/backend && pnpm test:unit src/common/guards/roles.guard.spec.ts`
-Expected: 4 个测试 PASS
+Run: `cd apps/backend && pnpm test:unit src/common/guards/roles.guard.spec.ts` Expected: 4 个测试 PASS
 
 - [ ] **Step 6: 修改 apps/backend/src/app.module.ts，注册 RolesGuard 为全局**
 
@@ -2244,11 +2272,7 @@ import { PrismaService } from './prisma/prisma.service';
 
 @Global()
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true }),
-    UsersModule,
-    AuthModule,
-  ],
+  imports: [ConfigModule.forRoot({ isGlobal: true }), UsersModule, AuthModule],
   providers: [
     PrismaService,
     { provide: APP_GUARD, useClass: JwtAuthGuard },
@@ -2271,6 +2295,7 @@ git commit -m "feat(backend): add RolesGuard + @Roles decorator for RBAC"
 ## Task 13: 前端切换到真实 NestJS 后端
 
 **Files:**
+
 - Modify: `apps/web-naive/.env.development`
 - Modify: `apps/web-naive/vite.config.mts`（如果使用 proxy）
 
@@ -2313,20 +2338,21 @@ server: {
 
 - [ ] **Step 4: 启动前后端联调**
 
-终端 A: `pnpm dev:backend`
-终端 B: `pnpm dev:naive`
+终端 A: `pnpm dev:backend` 终端 B: `pnpm dev:naive`
 
 打开浏览器到前端地址（终端打印的端口，通常 5666）。
 
 - [ ] **Step 5: 浏览器验证完整流程**
 
 打开浏览器开发者工具 Network 面板，用 `admin` / `admin123` 登录，验证：
+
 - `POST /api/auth/login` → 200，response.data 包含 accessToken / refreshToken
 - `GET /api/user/info` → 200，response.data.username = 'admin'，response.data.role = 'admin'
 - `GET /api/menu/all` → 200，返回 7 个菜单
 - `GET /api/auth/codes` → 200，返回 `['*']`
 
 如果失败：
+
 - 401：检查 Authorization 头是否带了 `Bearer <token>`
 - CORS：确认后端 `.env` 的 `CORS_ORIGIN` 包含前端实际地址
 - 404：确认 `setGlobalPrefix('api')` 在后端生效，前端 baseURL 也包含 `/api`
@@ -2345,6 +2371,7 @@ git commit -m "chore(web-naive): switch API base URL to NestJS backend"
 ## Task 14: 生产 Dockerfile + docker-compose.prod.yml
 
 **Files:**
+
 - Create: `apps/backend/Dockerfile`
 - Create: `apps/web-naive/Dockerfile`
 - Create: `apps/web-naive/nginx.conf`
@@ -2449,7 +2476,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER}']
       interval: 10s
       retries: 5
 
@@ -2470,7 +2497,7 @@ services:
       JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-7d}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
     expose:
-      - "3100"
+      - '3100'
 
   frontend:
     build:
@@ -2480,7 +2507,7 @@ services:
     depends_on:
       - backend
     ports:
-      - "${FRONTEND_PORT:-80}:80"
+      - '${FRONTEND_PORT:-80}:80'
 
 volumes:
   pg_data:
@@ -2488,16 +2515,14 @@ volumes:
 
 - [ ] **Step 5: 构建并启动验证**
 
-Run: `docker compose -f docker-compose.prod.yml --env-file .env build`
-Expected: 两个镜像构建成功
+Run: `docker compose -f docker-compose.prod.yml --env-file .env build` Expected: 两个镜像构建成功
 
-Run: `docker compose -f docker-compose.prod.yml --env-file .env up -d`
-Run: `docker compose -f docker-compose.prod.yml ps`
-Expected: 三个服务都 `Up`
+Run: `docker compose -f docker-compose.prod.yml --env-file .env up -d` Run: `docker compose -f docker-compose.prod.yml ps` Expected: 三个服务都 `Up`
 
 - [ ] **Step 6: 浏览器验证生产模式**
 
 打开 `http://localhost`，验证：
+
 - 前端能加载
 - 用 admin / admin123 登录（首次启动需要 backend 容器内执行 `pnpm prisma:seed` 创建 admin）
 - 进入首页显示菜单
@@ -2522,6 +2547,7 @@ git commit -m "chore(docker): add prod Dockerfiles + compose for frontend/backen
 ## Task 15: 文档与收尾
 
 **Files:**
+
 - Create: `apps/backend/README.md`
 - Modify: `CLAUDE.md`
 
@@ -2578,15 +2604,12 @@ Build via root `docker-compose.prod.yml`. See repo CLAUDE.md.
 
 ```markdown
 # Backend (NestJS)
-pnpm dev:backend                # Start NestJS in watch mode
-pnpm build:backend              # Build NestJS for prod
-cd apps/backend && pnpm prisma:migrate:dev    # Apply DB migrations (dev)
-cd apps/backend && pnpm prisma:seed            # Seed admin user
-cd apps/backend && pnpm test:integration       # Run integration tests
+
+pnpm dev:backend # Start NestJS in watch mode pnpm build:backend # Build NestJS for prod cd apps/backend && pnpm prisma:migrate:dev # Apply DB migrations (dev) cd apps/backend && pnpm prisma:seed # Seed admin user cd apps/backend && pnpm test:integration # Run integration tests
 
 # Docker
-docker compose -f docker-compose.dev.yml up -d   # Dev DB + MinIO
-docker compose -f docker-compose.prod.yml up -d  # Full prod stack
+
+docker compose -f docker-compose.dev.yml up -d # Dev DB + MinIO docker compose -f docker-compose.prod.yml up -d # Full prod stack
 ```
 
 - [ ] **Step 3: 提交**
