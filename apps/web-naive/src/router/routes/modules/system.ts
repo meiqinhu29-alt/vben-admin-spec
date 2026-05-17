@@ -32,6 +32,26 @@ const routes: RouteRecordRaw[] = [
           authority: ['admin'],
         },
       },
+      {
+        name: 'BrandManagement',
+        path: '/system/brand',
+        component: () => import('#/views/system/brand/index.vue'),
+        meta: {
+          icon: 'lucide:tag',
+          title: '品牌管理',
+          authority: ['admin'],
+        },
+      },
+      {
+        name: 'ShopManagement',
+        path: '/system/shop',
+        component: () => import('#/views/system/shop/index.vue'),
+        meta: {
+          icon: 'lucide:store',
+          title: '店铺管理',
+          authority: ['admin'],
+        },
+      },
     ],
   },
 ];
