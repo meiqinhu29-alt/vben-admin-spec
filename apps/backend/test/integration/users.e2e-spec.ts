@@ -7,7 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp, truncateAll } from './test-helpers';
 
-describe('Users (e2e)', () => {
+describe('users (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let token: string;
@@ -30,7 +30,7 @@ describe('Users (e2e)', () => {
     const login = await request(app.getHttpServer())
       .post('/api/auth/login')
       .send({ username: 'infouser', password: 'pwd123456' });
-    token = login.body.accessToken ?? login.body.data?.accessToken;
+    token = login.body.data.accessToken;
   });
 
   afterAll(async () => {
@@ -43,7 +43,7 @@ describe('Users (e2e)', () => {
       .get('/api/user/info')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
-    const body = res.body.data ?? res.body;
+    const body = res.body.data;
     expect(body.username).toBe('infouser');
     expect(body.role).toBe('finance');
     expect(body.shopIds).toEqual([]);
@@ -71,7 +71,7 @@ describe('Users (e2e)', () => {
       .get('/api/user/info')
       .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
-    const body = res.body.data ?? res.body;
+    const body = res.body.data;
     expect(body.shopIds).toHaveLength(2);
   });
 });

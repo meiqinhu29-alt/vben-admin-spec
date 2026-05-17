@@ -45,8 +45,8 @@ describe('auth (e2e)', () => {
       .post('/api/auth/login')
       .send({ username: 'testuser', password: 'test123' });
     expect(res.status).toBe(200);
-    expect(res.body.accessToken ?? res.body.data?.accessToken).toBeDefined();
-    expect(res.body.refreshToken ?? res.body.data?.refreshToken).toBeDefined();
+    expect(res.body.data.accessToken).toBeDefined();
+    expect(res.body.data.refreshToken).toBeDefined();
   });
 
   it('rejects logout without auth', async () => {
@@ -58,7 +58,7 @@ describe('auth (e2e)', () => {
     const login = await request(app.getHttpServer())
       .post('/api/auth/login')
       .send({ username: 'testuser', password: 'test123' });
-    const token = login.body.accessToken ?? login.body.data?.accessToken;
+    const token = login.body.data.accessToken;
 
     const res = await request(app.getHttpServer())
       .post('/api/auth/logout')
@@ -71,13 +71,13 @@ describe('auth (e2e)', () => {
       .post('/api/auth/login')
       .send({ username: 'testuser', password: 'test123' });
     const refreshToken =
-      login.body.refreshToken ?? login.body.data?.refreshToken;
+      login.body.data.refreshToken;
 
     const res = await request(app.getHttpServer())
       .post('/api/auth/refresh')
       .send({ refreshToken });
     expect(res.status).toBe(200);
-    const newRefresh = res.body.refreshToken ?? res.body.data?.refreshToken;
+    const newRefresh = res.body.data.refreshToken;
     expect(newRefresh).toBeDefined();
 
     const stored = await prisma.refreshToken.findMany({

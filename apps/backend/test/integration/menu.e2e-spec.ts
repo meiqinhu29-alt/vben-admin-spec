@@ -7,7 +7,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { createTestApp, truncateAll } from './test-helpers';
 
-describe('Menu (e2e)', () => {
+describe('menu (e2e)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let staffToken: string;
@@ -43,13 +43,13 @@ describe('Menu (e2e)', () => {
       .post('/api/auth/login')
       .send({ username: 'staff1', password: 'test123' });
     staffToken =
-      staffLogin.body.accessToken ?? staffLogin.body.data?.accessToken;
+      staffLogin.body.data.accessToken;
 
     const adminLogin = await request(app.getHttpServer())
       .post('/api/auth/login')
       .send({ username: 'admin1', password: 'test123' });
     adminToken =
-      adminLogin.body.accessToken ?? adminLogin.body.data?.accessToken;
+      adminLogin.body.data.accessToken;
   });
 
   afterAll(async () => {
@@ -67,7 +67,7 @@ describe('Menu (e2e)', () => {
       .get('/api/menu/all')
       .set('Authorization', `Bearer ${staffToken}`);
     expect(res.status).toBe(200);
-    const menus = res.body.data ?? res.body;
+    const menus = res.body.data;
     expect(Array.isArray(menus)).toBe(true);
     expect(menus).toHaveLength(2);
     expect(menus.map((m: { name: string }) => m.name)).toEqual([
@@ -81,7 +81,7 @@ describe('Menu (e2e)', () => {
       .get('/api/menu/all')
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(200);
-    const menus = res.body.data ?? res.body;
+    const menus = res.body.data;
     expect(menus).toHaveLength(3);
     expect(menus.map((m: { name: string }) => m.name)).toContain('System');
   });
@@ -91,7 +91,7 @@ describe('Menu (e2e)', () => {
       .get('/api/auth/codes')
       .set('Authorization', `Bearer ${staffToken}`);
     expect(res.status).toBe(200);
-    const codes = res.body.data ?? res.body;
+    const codes = res.body.data;
     expect(codes).toContain('report:create');
   });
 
@@ -100,7 +100,7 @@ describe('Menu (e2e)', () => {
       .get('/api/auth/codes')
       .set('Authorization', `Bearer ${adminToken}`);
     expect(res.status).toBe(200);
-    const codes = res.body.data ?? res.body;
+    const codes = res.body.data;
     expect(codes).toContain('user:manage');
   });
 });
