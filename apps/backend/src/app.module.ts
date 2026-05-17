@@ -6,6 +6,8 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
 import { AuthModule } from './modules/auth/auth.module';
 import { BrandsModule } from './modules/brands/brands.module';
+import { DailyReportsModule } from './modules/daily-reports/daily-reports.module';
+import { SummaryModule } from './modules/summary/summary.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { RolesModule } from './modules/roles/roles.module';
@@ -24,6 +26,8 @@ import { PrismaService } from './prisma/prisma.service';
     PermissionsModule,
     BrandsModule,
     ShopsModule,
+    DailyReportsModule,
+    SummaryModule,
   ],
   providers: [
     PrismaService,
