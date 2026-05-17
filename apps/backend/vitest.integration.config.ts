@@ -11,6 +11,7 @@ export default defineConfig({
     testTimeout: 30_000,
     setupFiles: ['./test/setup.ts'],
     sequence: { concurrent: false },
+    fileParallelism: false,
     pool: 'forks',
     forks: { singleFork: true },
   },
