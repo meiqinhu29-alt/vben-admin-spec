@@ -1,0 +1,11 @@
+dist/
+.env
+*.tsbuildinfo
+
+# stale tsc output (we use nest build → dist/)
+src/**/*.js
+src/**/*.d.ts
+test/**/*.js
+test/**/*.d.ts
+prisma/seed.js
+prisma/seed.d.ts
