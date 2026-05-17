@@ -6,7 +6,7 @@ export class UpdateUserDto {
   @MaxLength(100)
   displayName?: string;
 
-  @IsOptional()
   @IsEnum(['active', 'disabled'])
+  @IsOptional()
   status?: 'active' | 'disabled';
 }

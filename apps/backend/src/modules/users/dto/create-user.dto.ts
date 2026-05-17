@@ -1,24 +1,31 @@
-import { IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateUserDto {
-  @IsString()
   @IsNotEmpty()
-  @MinLength(3)
-  @MaxLength(50)
-  username!: string;
-
   @IsString()
-  @IsNotEmpty()
-  @MinLength(6)
-  @MaxLength(100)
-  password!: string;
-
-  @IsString()
-  @IsNotEmpty()
   @MaxLength(100)
   displayName!: string;
 
-  @IsOptional()
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(100)
+  @MinLength(6)
+  password!: string;
+
   @IsEnum(['active', 'disabled'])
+  @IsOptional()
   status?: 'active' | 'disabled';
+
+  @IsNotEmpty()
+  @IsString()
+  @MaxLength(50)
+  @MinLength(3)
+  username!: string;
 }

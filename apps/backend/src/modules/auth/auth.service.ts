@@ -70,11 +70,7 @@ export class AuthService {
     return this.issueTokens(user.id, user.username, roleCodes);
   }
 
-  private async issueTokens(
-    userId: string,
-    username: string,
-    roles: string[],
-  ) {
+  private async issueTokens(userId: string, username: string, roles: string[]) {
     const payload: JwtPayload = { sub: userId, username, roles };
 
     const accessToken = await this.jwt.signAsync(payload, {

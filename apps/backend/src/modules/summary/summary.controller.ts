@@ -1,25 +1,12 @@
-import { Controller, Get, Query, Res } from '@nestjs/common';
 import type { Response } from 'express';
+
+import { Controller, Get, Query, Res } from '@nestjs/common';
+
 import { SummaryService } from './summary.service';
 
 @Controller('summary')
 export class SummaryController {
   constructor(private readonly summary: SummaryService) {}
-
-  @Get()
-  async query(
-    @Query('shopIds') shopIds?: string,
-    @Query('dateFrom') dateFrom?: string,
-    @Query('dateTo') dateTo?: string,
-    @Query('status') status?: string,
-  ) {
-    return this.summary.query({
-      shopIds: shopIds ? shopIds.split(',') : undefined,
-      dateFrom: dateFrom ? new Date(dateFrom) : undefined,
-      dateTo: dateTo ? new Date(dateTo) : undefined,
-      status,
-    });
-  }
 
   @Get('export')
   async export(
@@ -41,8 +28,20 @@ export class SummaryController {
     const sheet = workbook.addWorksheet('资金汇总');
 
     sheet.addRow([
-      '店铺代码', '店铺名称', '日期', '期初余额', '营业额', '卡扣', '实际业绩',
-      '刷给公司', '转/存公司', '店铺费用', '交给老板', '期末余额', '状态', '备注',
+      '店铺代码',
+      '店铺名称',
+      '日期',
+      '期初余额',
+      '营业额',
+      '卡扣',
+      '实际业绩',
+      '刷给公司',
+      '转/存公司',
+      '店铺费用',
+      '交给老板',
+      '期末余额',
+      '状态',
+      '备注',
     ]);
 
     for (const row of rows) {
@@ -67,7 +66,9 @@ export class SummaryController {
     }
 
     sheet.addRow([
-      '合计', '', '',
+      '合计',
+      '',
+      '',
       totals.openingBalance?.toFixed(2) ?? '0.00',
       totals.revenue?.toFixed(2) ?? '0.00',
       totals.cardFee?.toFixed(2) ?? '0.00',
@@ -77,15 +78,37 @@ export class SummaryController {
       totals.shopExpense?.toFixed(2) ?? '0.00',
       totals.payToOwner?.toFixed(2) ?? '0.00',
       totals.closingBalance?.toFixed(2) ?? '0.00',
-      '', '',
+      '',
+      '',
     ]);
 
     const buffer = await workbook.xlsx.writeBuffer();
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    res!.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    res!.setHeader('Content-Disposition', 'attachment; filename="summary.xlsx"');
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    res!.send(buffer);
+
+    if (res) {
+      res.setHeader(
+        'Content-Type',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      );
+      res.setHeader(
+        'Content-Disposition',
+        'attachment; filename="summary.xlsx"',
+      );
+      res.send(buffer);
+    }
+  }
+
+  @Get()
+  async query(
+    @Query('shopIds') shopIds?: string,
+    @Query('dateFrom') dateFrom?: string,
+    @Query('dateTo') dateTo?: string,
+    @Query('status') status?: string,
+  ) {
+    return this.summary.query({
+      shopIds: shopIds ? shopIds.split(',') : undefined,
+      dateFrom: dateFrom ? new Date(dateFrom) : undefined,
+      dateTo: dateTo ? new Date(dateTo) : undefined,
+      status,
+    });
   }
 }

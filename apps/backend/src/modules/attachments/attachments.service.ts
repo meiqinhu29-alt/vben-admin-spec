@@ -1,5 +1,5 @@
-import process from 'node:process';
 import { Buffer } from 'node:buffer';
+import process from 'node:process';
 
 import { Injectable, NotFoundException } from '@nestjs/common';
 import * as Minio from 'minio';

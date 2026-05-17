@@ -146,9 +146,9 @@ describe('shopsService', () => {
       prisma.shop.findUnique.mockResolvedValue({ id: '1', code: 'SH1' });
       prisma.brand.findUnique.mockResolvedValue(null);
 
-      await expect(
-        service.update('1', { brandId: 'bad-id' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update('1', { brandId: 'bad-id' })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it('updates shop successfully', async () => {

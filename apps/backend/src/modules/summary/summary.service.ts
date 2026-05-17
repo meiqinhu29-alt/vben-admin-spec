@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+
 import { PrismaService } from '../../prisma/prisma.service';
 
 interface SummaryQuery {
@@ -9,10 +10,21 @@ interface SummaryQuery {
 }
 
 const NUMERIC_FIELDS = [
-  'openingBalance', 'revenue', 'cardFee', 'actualRevenue',
-  'transferToCompany', 'depositToCompany', 'payToOwner', 'shopExpense',
-  'closingBalance', 'topupIncome', 'mallSettlement', 'otherCompanyIncome',
-  'companyToOwner', 'cardPayment', 'companyBonus',
+  'openingBalance',
+  'revenue',
+  'cardFee',
+  'actualRevenue',
+  'transferToCompany',
+  'depositToCompany',
+  'payToOwner',
+  'shopExpense',
+  'closingBalance',
+  'topupIncome',
+  'mallSettlement',
+  'otherCompanyIncome',
+  'companyToOwner',
+  'cardPayment',
+  'companyBonus',
 ] as const;
 
 @Injectable()
@@ -37,7 +49,10 @@ export class SummaryService {
 
     const totals: Record<string, number> = {};
     for (const field of NUMERIC_FIELDS) {
-      totals[field] = rows.reduce((sum, r) => sum + Number((r as any)[field]), 0);
+      totals[field] = rows.reduce(
+        (sum: number, r) => sum + Number(r[field]),
+        0,
+      );
     }
 
     return { rows, totals };

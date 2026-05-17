@@ -6,11 +6,11 @@ import { PermissionsService } from '../permissions/permissions.service';
 export class MenuService {
   constructor(private readonly permissions: PermissionsService) {}
 
-  async getMenusByUserId(userId: string) {
-    return this.permissions.resolveMenuTree(userId);
-  }
-
   async getCodesByUserId(userId: string): Promise<string[]> {
     return this.permissions.resolvePermissions(userId);
+  }
+
+  async getMenusByUserId(userId: string) {
+    return this.permissions.resolveMenuTree(userId);
   }
 }

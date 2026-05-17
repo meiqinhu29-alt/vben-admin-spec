@@ -1,8 +1,11 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
+import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
 import { BalanceCalculatorService } from './balance-calculator.service';
@@ -42,12 +45,12 @@ export class DailyReportsService {
         (await this.getOpeningBalance(shopId, report.reportDate));
       const { actualRevenue, closingBalance } = this.calculator.calculate({
         openingBalance,
-        revenue: report.revenue,
-        cardFee: report.cardFee,
-        transferToCompany: report.transferToCompany,
-        depositToCompany: report.depositToCompany,
-        payToOwner: report.payToOwner,
-        shopExpense: report.shopExpense,
+        revenue: report.revenue.toString(),
+        cardFee: report.cardFee.toString(),
+        transferToCompany: report.transferToCompany.toString(),
+        depositToCompany: report.depositToCompany.toString(),
+        payToOwner: report.payToOwner.toString(),
+        shopExpense: report.shopExpense.toString(),
       });
       await this.prisma.dailyFundsReport.update({
         where: { id: report.id },
@@ -73,29 +76,42 @@ export class DailyReportsService {
       shopExpense: dto.shopExpense ?? '0',
     });
 
-    const report = await this.prisma.dailyFundsReport.create({
-      data: {
-        shopId: dto.shopId,
-        reportDate,
-        openingBalance,
-        revenue: dto.revenue ?? '0',
-        cardFee: dto.cardFee ?? '0',
-        actualRevenue,
-        transferToCompany: dto.transferToCompany ?? '0',
-        depositToCompany: dto.depositToCompany ?? '0',
-        payToOwner: dto.payToOwner ?? '0',
-        shopExpense: dto.shopExpense ?? '0',
-        closingBalance,
-        topupIncome: dto.topupIncome ?? '0',
-        mallSettlement: dto.mallSettlement ?? '0',
-        otherCompanyIncome: dto.otherCompanyIncome ?? '0',
-        companyToOwner: dto.companyToOwner ?? '0',
-        cardPayment: dto.cardPayment ?? '0',
-        companyBonus: dto.companyBonus ?? '0',
-        remark: dto.remark,
-        createdBy: userId,
-      },
-    });
+    let report: Awaited<ReturnType<typeof this.prisma.dailyFundsReport.create>>;
+    try {
+      report = await this.prisma.dailyFundsReport.create({
+        data: {
+          shopId: dto.shopId,
+          reportDate,
+          openingBalance,
+          revenue: dto.revenue ?? '0',
+          cardFee: dto.cardFee ?? '0',
+          actualRevenue,
+          transferToCompany: dto.transferToCompany ?? '0',
+          depositToCompany: dto.depositToCompany ?? '0',
+          payToOwner: dto.payToOwner ?? '0',
+          shopExpense: dto.shopExpense ?? '0',
+          closingBalance,
+          topupIncome: dto.topupIncome ?? '0',
+          mallSettlement: dto.mallSettlement ?? '0',
+          otherCompanyIncome: dto.otherCompanyIncome ?? '0',
+          companyToOwner: dto.companyToOwner ?? '0',
+          cardPayment: dto.cardPayment ?? '0',
+          companyBonus: dto.companyBonus ?? '0',
+          remark: dto.remark,
+          createdBy: userId,
+        },
+      });
+    } catch (e) {
+      if (
+        e instanceof Prisma.PrismaClientKnownRequestError &&
+        e.code === 'P2002'
+      ) {
+        throw new ConflictException(
+          'A report for this shop and date already exists',
+        );
+      }
+      throw e;
+    }
 
     await this.prisma.auditLog.create({
       data: {
@@ -172,7 +188,9 @@ export class DailyReportsService {
     });
     if (!existing) throw new NotFoundException('Report not found');
     if (existing.status !== 'pending') {
-      throw new BadRequestException('Only pending reports can be edited');
+      throw new ConflictException(
+        `Cannot edit report with status '${existing.status}'`,
+      );
     }
 
     const openingBalance =

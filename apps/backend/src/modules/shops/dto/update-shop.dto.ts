@@ -38,8 +38,8 @@ export class UpdateShopDto {
   @MaxLength(50)
   contactPhone?: string;
 
-  @IsOptional()
   @IsNumberString()
+  @IsOptional()
   initialBalance?: string;
 
   @IsOptional()

@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from '@nestjs/common';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { BalanceCalculatorService } from './balance-calculator.service';
@@ -104,7 +108,7 @@ describe('dailyReportsService', () => {
       });
 
       await expect(service.update('r1', {}, 'user-1')).rejects.toThrow(
-        BadRequestException,
+        ConflictException,
       );
     });
 

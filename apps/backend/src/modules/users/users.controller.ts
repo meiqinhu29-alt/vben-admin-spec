@@ -27,6 +27,36 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly users: UsersService) {}
 
+  @HttpCode(204)
+  @Put('users/:id/roles')
+  @Roles('admin')
+  async assignRoles(@Param('id') id: string, @Body() dto: AssignRolesDto) {
+    await this.users.assignRoles(id, dto.roleIds);
+  }
+
+  @HttpCode(204)
+  @Put('users/:id/shops')
+  @Roles('admin')
+  async assignShops(@Param('id') id: string, @Body() dto: AssignShopsDto) {
+    await this.users.assignShops(id, dto.shopIds);
+  }
+
+  @HttpCode(204)
+  @Post('users/:id/password')
+  @Roles('admin')
+  async changePassword(
+    @Param('id') id: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    await this.users.changePassword(id, dto.newPassword);
+  }
+
+  @Post('users')
+  @Roles('admin')
+  createUser(@Body() dto: CreateUserDto) {
+    return this.users.create(dto);
+  }
+
   @Get('user/info')
   async getCurrentUserInfo(@CurrentUser() user: AuthUser) {
     const fresh = await this.users.findById(user.userId);
@@ -41,8 +71,8 @@ export class UsersController {
     };
   }
 
-  @Roles('admin')
   @Get('users')
+  @Roles('admin')
   listUsers(
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
@@ -57,43 +87,16 @@ export class UsersController {
     });
   }
 
-  @Roles('admin')
-  @Post('users')
-  createUser(@Body() dto: CreateUserDto) {
-    return this.users.create(dto);
-  }
-
-  @Roles('admin')
-  @Patch('users/:id')
-  updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
-    return this.users.update(id, dto);
-  }
-
-  @Roles('admin')
-  @Post('users/:id/password')
-  @HttpCode(204)
-  async changePassword(@Param('id') id: string, @Body() dto: ChangePasswordDto) {
-    await this.users.changePassword(id, dto.newPassword);
-  }
-
-  @Roles('admin')
   @Delete('users/:id')
   @HttpCode(204)
+  @Roles('admin')
   async removeUser(@Param('id') id: string) {
     await this.users.remove(id);
   }
 
+  @Patch('users/:id')
   @Roles('admin')
-  @Put('users/:id/roles')
-  @HttpCode(204)
-  async assignRoles(@Param('id') id: string, @Body() dto: AssignRolesDto) {
-    await this.users.assignRoles(id, dto.roleIds);
-  }
-
-  @Roles('admin')
-  @Put('users/:id/shops')
-  @HttpCode(204)
-  async assignShops(@Param('id') id: string, @Body() dto: AssignShopsDto) {
-    await this.users.assignShops(id, dto.shopIds);
+  updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
+    return this.users.update(id, dto);
   }
 }
