@@ -4,7 +4,6 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-
 import { Prisma } from '@prisma/client';
 
 import { PrismaService } from '../../prisma/prisma.service';
@@ -101,16 +100,16 @@ export class DailyReportsService {
           createdBy: userId,
         },
       });
-    } catch (e) {
+    } catch (error) {
       if (
-        e instanceof Prisma.PrismaClientKnownRequestError &&
-        e.code === 'P2002'
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
       ) {
         throw new ConflictException(
           'A report for this shop and date already exists',
         );
       }
-      throw e;
+      throw error;
     }
 
     await this.prisma.auditLog.create({

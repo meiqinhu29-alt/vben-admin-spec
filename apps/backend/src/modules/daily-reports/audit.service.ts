@@ -4,6 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
@@ -17,7 +18,7 @@ export class AuditService {
         `Cannot audit report with status '${report.status}'`,
       );
     }
-    if (!operatorRoles.some((r) => ['finance', 'admin'].includes(r))) {
+    if (!operatorRoles.some((r) => ['admin', 'finance'].includes(r))) {
       throw new ForbiddenException('Only finance or admin can audit reports');
     }
     return this.transition(
@@ -40,7 +41,7 @@ export class AuditService {
         `Cannot lock report with status '${report.status}'`,
       );
     }
-    if (!operatorRoles.some((r) => ['boss', 'admin'].includes(r))) {
+    if (!operatorRoles.some((r) => ['admin', 'boss'].includes(r))) {
       throw new ForbiddenException('Only boss or admin can lock reports');
     }
     return this.transition(reportId, 'audited', 'locked', 'lock', operatorId, {
@@ -61,7 +62,7 @@ export class AuditService {
         `Cannot reject report with status '${report.status}'`,
       );
     }
-    if (!operatorRoles.some((r) => ['finance', 'admin'].includes(r))) {
+    if (!operatorRoles.some((r) => ['admin', 'finance'].includes(r))) {
       throw new ForbiddenException('Only finance or admin can reject reports');
     }
     return this.transition(
