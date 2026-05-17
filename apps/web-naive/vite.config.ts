@@ -8,9 +8,8 @@ export default defineConfig(async () => {
         proxy: {
           '/api': {
             changeOrigin: true,
-            rewrite: (path) => path.replace(/^\/api/, ''),
-            // mock代理目标地址
-            target: 'http://localhost:5320/api',
+            // NestJS 后端运行在 3100，自带 /api 前缀，不需要 rewrite
+            target: 'http://localhost:3100',
             ws: true,
           },
         },
