@@ -1,11 +1,12 @@
 import type { ExecutionContext } from '@nestjs/common';
 
 import { UserRole } from '@vben/types';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import { RolesGuard } from './roles.guard';
 
-function makeCtx(user: { role: string } | null): ExecutionContext {
+function makeCtx(user: null | { role: string }): ExecutionContext {
   return {
     switchToHttp: () => ({ getRequest: () => ({ user }) }),
     getHandler: () => null,

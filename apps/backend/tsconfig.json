@@ -16,7 +16,6 @@
     "ignoreDeprecations": "6.0",
     "noEmit": false,
     "outDir": "./dist",
-    "rootDir": "./src",
     "baseUrl": "./",
     "paths": {
       "#/*": ["src/*"]

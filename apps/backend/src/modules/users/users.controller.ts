@@ -1,9 +1,8 @@
+import type { AuthUser } from '../../common/decorators/current-user.decorator';
+
 import { Controller, Get, NotFoundException } from '@nestjs/common';
 
-import {
-  type AuthUser,
-  CurrentUser,
-} from '../../common/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { UsersService } from './users.service';
 
 @Controller()

@@ -70,8 +70,7 @@ describe('auth (e2e)', () => {
     const login = await request(app.getHttpServer())
       .post('/api/auth/login')
       .send({ username: 'testuser', password: 'test123' });
-    const refreshToken =
-      login.body.data.refreshToken;
+    const refreshToken = login.body.data.refreshToken;
 
     const res = await request(app.getHttpServer())
       .post('/api/auth/refresh')

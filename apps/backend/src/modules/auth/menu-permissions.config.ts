@@ -4,9 +4,9 @@ interface MenuItem {
   name: string;
   path: string;
   meta: {
-    title: string;
     icon?: string;
     order?: number;
+    title: string;
   };
   component?: string;
   children?: MenuItem[];

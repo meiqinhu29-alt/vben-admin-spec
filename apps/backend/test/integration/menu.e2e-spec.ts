@@ -42,14 +42,12 @@ describe('menu (e2e)', () => {
     const staffLogin = await request(app.getHttpServer())
       .post('/api/auth/login')
       .send({ username: 'staff1', password: 'test123' });
-    staffToken =
-      staffLogin.body.data.accessToken;
+    staffToken = staffLogin.body.data.accessToken;
 
     const adminLogin = await request(app.getHttpServer())
       .post('/api/auth/login')
       .send({ username: 'admin1', password: 'test123' });
-    adminToken =
-      adminLogin.body.data.accessToken;
+    adminToken = adminLogin.body.data.accessToken;
   });
 
   afterAll(async () => {
