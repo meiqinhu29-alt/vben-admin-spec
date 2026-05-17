@@ -1,4 +1,4 @@
-import { UserRole } from '@vben/types';
+import { UserRole } from '@prisma/client';
 
 interface MenuItem {
   name: string;
@@ -70,19 +70,19 @@ const ALL_MENUS: MenuItem[] = [
 ];
 
 export const ROLE_MENU_MAP: Record<UserRole, MenuItem[]> = {
-  [UserRole.Staff]: [ALL_MENUS[0], ALL_MENUS[1]],
-  [UserRole.Manager]: [ALL_MENUS[0], ALL_MENUS[1]],
-  [UserRole.Finance]: [ALL_MENUS[0], ALL_MENUS[1]],
-  [UserRole.Boss]: [ALL_MENUS[0], ALL_MENUS[1]],
-  [UserRole.Admin]: ALL_MENUS,
+  [UserRole.staff]: [ALL_MENUS[0], ALL_MENUS[1]],
+  [UserRole.manager]: [ALL_MENUS[0], ALL_MENUS[1]],
+  [UserRole.finance]: [ALL_MENUS[0], ALL_MENUS[1]],
+  [UserRole.boss]: [ALL_MENUS[0], ALL_MENUS[1]],
+  [UserRole.admin]: ALL_MENUS,
 };
 
 export const ROLE_CODES_MAP: Record<UserRole, string[]> = {
-  [UserRole.Staff]: ['report:create', 'report:view-own'],
-  [UserRole.Manager]: ['report:create', 'report:view-shop', 'report:approve'],
-  [UserRole.Finance]: ['report:view-all', 'report:export'],
-  [UserRole.Boss]: ['report:view-all', 'report:export', 'report:dashboard'],
-  [UserRole.Admin]: [
+  [UserRole.staff]: ['report:create', 'report:view-own'],
+  [UserRole.manager]: ['report:create', 'report:view-shop', 'report:approve'],
+  [UserRole.finance]: ['report:view-all', 'report:export'],
+  [UserRole.boss]: ['report:view-all', 'report:export', 'report:dashboard'],
+  [UserRole.admin]: [
     'report:create',
     'report:view-all',
     'report:approve',

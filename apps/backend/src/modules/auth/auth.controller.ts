@@ -1,12 +1,11 @@
 import type { AuthUser } from '../../common/decorators/current-user.decorator';
 
-import { LoginDto, RefreshDto } from '@vben/types';
-
 import { Body, Controller, HttpCode, Post } from '@nestjs/common';
 
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Public } from '../../common/decorators/public.decorator';
 import { AuthService } from './auth.service';
+import { LoginDto, RefreshDto } from './dto/auth.dto';
 
 @Controller('auth')
 export class AuthController {

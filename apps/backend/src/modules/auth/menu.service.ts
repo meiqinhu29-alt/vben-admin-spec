@@ -1,8 +1,7 @@
 import type { MenuItem } from './menu-permissions.config';
 
-import { UserRole } from '@vben/types';
-
 import { Injectable } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 
 import { ROLE_CODES_MAP, ROLE_MENU_MAP } from './menu-permissions.config';
 

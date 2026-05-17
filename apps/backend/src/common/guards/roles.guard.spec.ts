@@ -1,7 +1,6 @@
 import type { ExecutionContext } from '@nestjs/common';
 
-import { UserRole } from '@vben/types';
-
+import { UserRole } from '@prisma/client';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RolesGuard } from './roles.guard';
@@ -27,7 +26,7 @@ describe('rolesGuard', () => {
     const reflector = {
       getAllAndOverride: vi
         .fn()
-        .mockReturnValue([UserRole.Finance, UserRole.Admin]),
+        .mockReturnValue([UserRole.finance, UserRole.admin]),
     };
     const guard = new RolesGuard(reflector as never);
     expect(guard.canActivate(makeCtx({ role: 'finance' }))).toBe(true);
@@ -35,7 +34,7 @@ describe('rolesGuard', () => {
 
   it('denies when user role missing from required', () => {
     const reflector = {
-      getAllAndOverride: vi.fn().mockReturnValue([UserRole.Admin]),
+      getAllAndOverride: vi.fn().mockReturnValue([UserRole.admin]),
     };
     const guard = new RolesGuard(reflector as never);
     expect(guard.canActivate(makeCtx({ role: 'staff' }))).toBe(false);
@@ -43,7 +42,7 @@ describe('rolesGuard', () => {
 
   it('denies when no user in context', () => {
     const reflector = {
-      getAllAndOverride: vi.fn().mockReturnValue([UserRole.Admin]),
+      getAllAndOverride: vi.fn().mockReturnValue([UserRole.admin]),
     };
     const guard = new RolesGuard(reflector as never);
     expect(guard.canActivate(makeCtx(null))).toBe(false);
