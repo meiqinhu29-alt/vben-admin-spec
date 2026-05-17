@@ -33,7 +33,11 @@ export const useAuthStore = defineStore('auth', () => {
     let userInfo: null | UserInfo = null;
     try {
       loginLoading.value = true;
-      const { accessToken } = await loginApi(params);
+      // 只把后端需要的字段提取出来，selectAccount / captcha 等是纯前端 UI 字段
+      const { accessToken } = await loginApi({
+        username: params.username,
+        password: params.password,
+      });
 
       // 如果成功获取到 accessToken
       if (accessToken) {
