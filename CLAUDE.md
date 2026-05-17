@@ -44,6 +44,18 @@ pnpm check:cspell      # Spell check
 
 # Run single test file
 npx vitest run packages/stores/src/modules/tabbar.test.ts
+
+# Backend (NestJS, port 3100)
+pnpm dev:backend                                           # Start NestJS in watch mode
+pnpm build:backend                                         # Build NestJS for prod
+cd apps/backend && pnpm prisma:migrate:dev                 # Apply DB migrations (dev)
+cd apps/backend && pnpm prisma:seed                        # Seed admin user (admin/admin123)
+cd apps/backend && pnpm test:unit                          # Backend unit tests
+cd apps/backend && pnpm test:integration                   # Backend e2e tests (requires PG)
+
+# Docker
+docker compose -f docker-compose.dev.yml up -d             # Dev DB (PostgreSQL + MinIO)
+docker compose -f docker-compose.prod.yml up -d --build    # Full prod stack (frontend + backend + DB)
 ```
 
 ## Architecture
@@ -54,8 +66,9 @@ This is a **pnpm monorepo** with Turborepo orchestration, forked from vben-admin
 
 ```
 apps/
-  web-naive/             → PRIMARY: Shop backend (Naive UI)
-  backend-mock/          → Nitro-based mock API server (being replaced by NestJS)
+  web-naive/             → PRIMARY: Shop backend frontend (Naive UI)
+  backend/               → NestJS REST API (auth + users + menu, port 3100)
+  backend-mock/          → Nitro mock (legacy; web-naive switched to backend in dev)
   web-antd/              → Reference only (Ant Design Vue)
   web-ele/               → Reference only (Element Plus)
   web-tdesign/           → Reference only (TDesign)
@@ -75,6 +88,7 @@ packages/effects/        → Feature modules consumed by apps
   plugins/               → Plugin integrations (tiptap, vxe-table, etc.)
   request/               → HTTP client (axios wrapper with interceptors)
 
+packages/types/          → Shared DTO/enum/types between web-naive and backend (UserRole, LoginDto, etc.)
 packages/stores/         → Pinia stores (user, access, tabbar)
 packages/locales/        → i18n (vue-i18n)
 packages/utils/          → Pure utility functions
