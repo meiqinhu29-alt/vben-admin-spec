@@ -25,7 +25,10 @@ export function createBrandApi(data: Record<string, any>) {
 }
 
 export function updateBrandApi(id: string, data: Record<string, any>) {
-  return requestClient.request<Brand>(`/brands/${id}`, { method: 'PATCH', data });
+  return requestClient.request<Brand>(`/brands/${id}`, {
+    method: 'PATCH',
+    data,
+  });
 }
 
 export function deleteBrandApi(id: string) {

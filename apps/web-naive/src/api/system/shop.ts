@@ -5,7 +5,7 @@ export interface Shop {
   code: string;
   name: string;
   brandId: string;
-  brand?: { id: string; code: string; name: string };
+  brand?: { code: string; id: string; name: string };
   initialBalance: string;
   address?: null | string;
   contactName?: null | string;

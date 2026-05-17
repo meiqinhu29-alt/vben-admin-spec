@@ -52,6 +52,16 @@ const routes: RouteRecordRaw[] = [
           authority: ['admin'],
         },
       },
+      {
+        name: 'UserManagement',
+        path: '/system/user',
+        component: () => import('#/views/system/user/index.vue'),
+        meta: {
+          icon: 'lucide:users',
+          title: '用户管理',
+          authority: ['admin'],
+        },
+      },
     ],
   },
 ];
