@@ -55,6 +55,8 @@ export async function truncateAll(prisma: PrismaService) {
     prisma.userRoleRelation.deleteMany({}),
     prisma.refreshToken.deleteMany({}),
     prisma.userShopAccess.deleteMany({}),
+    prisma.shop.deleteMany({}),
+    prisma.brand.deleteMany({}),
     prisma.menu.deleteMany({}),
     prisma.role.deleteMany({}),
     prisma.user.deleteMany({}),
