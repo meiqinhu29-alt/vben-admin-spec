@@ -54,7 +54,7 @@ export class PermissionsService {
       else permissions.delete(p.authCode);
     }
 
-    return [...permissions].toSorted();
+    return [...permissions].sort();
   }
 
   async resolveUserRoleCodes(userId: string): Promise<string[]> {

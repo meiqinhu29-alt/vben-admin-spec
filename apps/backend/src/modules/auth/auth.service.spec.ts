@@ -34,6 +34,12 @@ const configServiceMock = {
   }),
 };
 
+const permissionsServiceMock = {
+  resolveUserRoleCodes: vi.fn(),
+  resolvePermissions: vi.fn(),
+  resolveMenuTree: vi.fn(),
+};
+
 describe('authService.login', () => {
   let service: AuthService;
 
@@ -44,6 +50,7 @@ describe('authService.login', () => {
       jwtServiceMock as any,
       prismaMock as any,
       configServiceMock as any,
+      permissionsServiceMock as any,
     );
   });
 
@@ -58,8 +65,8 @@ describe('authService.login', () => {
     usersServiceMock.verifyPasswordByUsername.mockResolvedValue({
       id: 'u-1',
       username: 'alice',
-      role: 'staff',
     });
+    permissionsServiceMock.resolveUserRoleCodes.mockResolvedValue(['staff']);
     jwtServiceMock.signAsync
       .mockResolvedValueOnce('access-jwt')
       .mockResolvedValueOnce('refresh-jwt');

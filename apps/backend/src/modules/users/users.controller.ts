@@ -11,14 +11,14 @@ export class UsersController {
 
   @Get('user/info')
   async getCurrentUserInfo(@CurrentUser() user: AuthUser) {
-    const fresh = await this.users.findById(user.id);
+    const fresh = await this.users.findById(user.userId);
     if (!fresh) throw new NotFoundException('User not found');
 
     return {
       id: fresh.id,
       username: fresh.username,
       displayName: fresh.displayName,
-      role: fresh.role,
+      roles: fresh.userRoles.map((ur) => ur.role.code),
       shopIds: fresh.shopAccess.map((s) => s.shopId),
     };
   }

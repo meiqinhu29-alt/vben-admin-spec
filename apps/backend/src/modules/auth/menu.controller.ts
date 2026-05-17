@@ -11,11 +11,11 @@ export class MenuController {
 
   @Get('auth/codes')
   async getCodes(@CurrentUser() user: AuthUser) {
-    return this.menu.getCodesByRole(user.role);
+    return this.menu.getCodesByUserId(user.userId);
   }
 
   @Get('menu/all')
   async getMenus(@CurrentUser() user: AuthUser) {
-    return this.menu.getMenuByRole(user.role);
+    return this.menu.getMenusByUserId(user.userId);
   }
 }

@@ -1,19 +1,16 @@
-import type { MenuItem } from './menu-permissions.config';
-
 import { Injectable } from '@nestjs/common';
-import { UserRole } from '@prisma/client';
 
-import { ROLE_CODES_MAP, ROLE_MENU_MAP } from './menu-permissions.config';
+import { PermissionsService } from '../permissions/permissions.service';
 
 @Injectable()
 export class MenuService {
-  getCodesByRole(role: string): string[] {
-    const userRole = role as UserRole;
-    return ROLE_CODES_MAP[userRole] ?? [];
+  constructor(private readonly permissions: PermissionsService) {}
+
+  async getMenusByUserId(userId: string) {
+    return this.permissions.resolveMenuTree(userId);
   }
 
-  getMenuByRole(role: string): MenuItem[] {
-    const userRole = role as UserRole;
-    return ROLE_MENU_MAP[userRole] ?? [];
+  async getCodesByUserId(userId: string): Promise<string[]> {
+    return this.permissions.resolvePermissions(userId);
   }
 }

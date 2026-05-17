@@ -19,9 +19,10 @@ import { MenusService } from './menus.service';
 export class MenusController {
   constructor(private readonly menusService: MenusService) {}
 
-  @Get()
-  listTree() {
-    return this.menusService.listTree();
+  @Post()
+  @Roles('admin')
+  create(@Body() dto: CreateMenuDto) {
+    return this.menusService.create(dto);
   }
 
   @Get(':id')
@@ -29,16 +30,9 @@ export class MenusController {
     return this.menusService.getById(id);
   }
 
-  @Post()
-  @Roles('admin')
-  create(@Body() dto: CreateMenuDto) {
-    return this.menusService.create(dto);
-  }
-
-  @Patch(':id')
-  @Roles('admin')
-  update(@Param('id') id: string, @Body() dto: UpdateMenuDto) {
-    return this.menusService.update(id, dto);
+  @Get()
+  listTree() {
+    return this.menusService.listTree();
   }
 
   @Delete(':id')
@@ -46,5 +40,11 @@ export class MenusController {
   @Roles('admin')
   remove(@Param('id') id: string) {
     return this.menusService.remove(id);
+  }
+
+  @Patch(':id')
+  @Roles('admin')
+  update(@Param('id') id: string, @Body() dto: UpdateMenuDto) {
+    return this.menusService.update(id, dto);
   }
 }

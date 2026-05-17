@@ -13,12 +13,18 @@ const MENU_TYPES = ['catalog', 'menu', 'button', 'link', 'embedded'] as const;
 
 export class UpdateMenuDto {
   @IsOptional()
-  @IsUUID()
-  parentId?: string | null;
+  @IsString()
+  @MaxLength(100)
+  authCode?: string;
 
   @IsOptional()
-  @IsEnum(MENU_TYPES)
-  type?: (typeof MENU_TYPES)[number];
+  @IsString()
+  @MaxLength(200)
+  component?: string;
+
+  @IsObject()
+  @IsOptional()
+  meta?: Record<string, any>;
 
   @IsOptional()
   @IsString()
@@ -26,30 +32,24 @@ export class UpdateMenuDto {
   name?: string;
 
   @IsOptional()
+  @IsUUID()
+  parentId?: null | string;
+
+  @IsOptional()
   @IsString()
   @MaxLength(200)
   path?: string;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(200)
-  component?: string;
-
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  authCode?: string;
-
-  @IsOptional()
-  @IsObject()
-  meta?: Record<string, any>;
-
-  @IsOptional()
-  @IsEnum(['active', 'inactive'])
-  status?: 'active' | 'inactive';
-
-  @IsOptional()
   @IsInt()
+  @IsOptional()
   @Min(0)
   sortOrder?: number;
+
+  @IsEnum(['active', 'inactive'])
+  @IsOptional()
+  status?: 'active' | 'inactive';
+
+  @IsEnum(MENU_TYPES)
+  @IsOptional()
+  type?: (typeof MENU_TYPES)[number];
 }

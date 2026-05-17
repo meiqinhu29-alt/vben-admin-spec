@@ -12,28 +12,13 @@ import { UpdateMenuDto } from './dto/update-menu.dto';
 export class MenusService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listTree() {
-    const all = await this.prisma.menu.findMany({
-      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-    });
-    return this.buildTree(all, null);
-  }
-
-  async getById(id: string) {
-    const menu = await this.prisma.menu.findUnique({ where: { id } });
-    if (!menu) throw new NotFoundException(`Menu ${id} not found`);
-    return menu;
-  }
-
   async create(dto: CreateMenuDto) {
     if (dto.parentId) {
       const parent = await this.prisma.menu.findUnique({
         where: { id: dto.parentId },
       });
       if (!parent)
-        throw new NotFoundException(
-          `Parent menu ${dto.parentId} not found`,
-        );
+        throw new NotFoundException(`Parent menu ${dto.parentId} not found`);
     }
 
     if (dto.authCode) {
@@ -41,9 +26,7 @@ export class MenusService {
         where: { authCode: dto.authCode },
       });
       if (existing)
-        throw new ConflictException(
-          `authCode ${dto.authCode} already exists`,
-        );
+        throw new ConflictException(`authCode ${dto.authCode} already exists`);
     }
 
     return this.prisma.menu.create({
@@ -61,33 +44,17 @@ export class MenusService {
     });
   }
 
-  async update(id: string, dto: UpdateMenuDto) {
-    const existing = await this.prisma.menu.findUnique({ where: { id } });
-    if (!existing) throw new NotFoundException(`Menu ${id} not found`);
+  async getById(id: string) {
+    const menu = await this.prisma.menu.findUnique({ where: { id } });
+    if (!menu) throw new NotFoundException(`Menu ${id} not found`);
+    return menu;
+  }
 
-    if (dto.parentId !== undefined && dto.parentId !== null) {
-      const parent = await this.prisma.menu.findUnique({
-        where: { id: dto.parentId },
-      });
-      if (!parent)
-        throw new NotFoundException(
-          `Parent menu ${dto.parentId} not found`,
-        );
-      if (dto.parentId === id)
-        throw new ConflictException('Menu cannot be its own parent');
-    }
-
-    if (dto.authCode && dto.authCode !== existing.authCode) {
-      const dup = await this.prisma.menu.findUnique({
-        where: { authCode: dto.authCode },
-      });
-      if (dup)
-        throw new ConflictException(
-          `authCode ${dto.authCode} already exists`,
-        );
-    }
-
-    return this.prisma.menu.update({ where: { id }, data: dto });
+  async listTree() {
+    const all = await this.prisma.menu.findMany({
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
+    return this.buildTree(all, null);
   }
 
   async remove(id: string) {
@@ -106,7 +73,32 @@ export class MenusService {
     await this.prisma.menu.delete({ where: { id } });
   }
 
-  private buildTree(menus: any[], parentId: string | null): any[] {
+  async update(id: string, dto: UpdateMenuDto) {
+    const existing = await this.prisma.menu.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException(`Menu ${id} not found`);
+
+    if (dto.parentId !== undefined && dto.parentId !== null) {
+      const parent = await this.prisma.menu.findUnique({
+        where: { id: dto.parentId },
+      });
+      if (!parent)
+        throw new NotFoundException(`Parent menu ${dto.parentId} not found`);
+      if (dto.parentId === id)
+        throw new ConflictException('Menu cannot be its own parent');
+    }
+
+    if (dto.authCode && dto.authCode !== existing.authCode) {
+      const dup = await this.prisma.menu.findUnique({
+        where: { authCode: dto.authCode },
+      });
+      if (dup)
+        throw new ConflictException(`authCode ${dto.authCode} already exists`);
+    }
+
+    return this.prisma.menu.update({ where: { id }, data: dto });
+  }
+
+  private buildTree(menus: any[], parentId: null | string): any[] {
     return menus
       .filter((m) => m.parentId === parentId)
       .map((m) => {

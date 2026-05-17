@@ -4,12 +4,13 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 
 import { PrismaService } from '../../prisma/prisma.service';
+import { PermissionsService } from '../permissions/permissions.service';
 import { UsersService } from '../users/users.service';
 
 interface JwtPayload {
   sub: string;
   username: string;
-  role: string;
+  roles: string[];
 }
 
 @Injectable()
@@ -19,12 +20,14 @@ export class AuthService {
     private readonly jwt: JwtService,
     private readonly prisma: PrismaService,
     private readonly config: ConfigService,
+    private readonly permissions: PermissionsService,
   ) {}
 
   async login(username: string, password: string) {
     const user = await this.users.verifyPasswordByUsername(username, password);
     if (!user) throw new UnauthorizedException('Invalid credentials');
-    return this.issueTokens(user);
+    const roleCodes = await this.permissions.resolveUserRoleCodes(user.id);
+    return this.issueTokens(user.id, user.username, roleCodes);
   }
 
   async logout(userId: string) {
@@ -61,19 +64,18 @@ export class AuthService {
       where: { id: stored.id },
       data: { revokedAt: new Date() },
     });
-    return this.issueTokens(user);
+
+    // Re-fetch role codes in case roles changed since token was issued
+    const roleCodes = await this.permissions.resolveUserRoleCodes(user.id);
+    return this.issueTokens(user.id, user.username, roleCodes);
   }
 
-  private async issueTokens(user: {
-    id: string;
-    role: string;
-    username: string;
-  }) {
-    const payload: JwtPayload = {
-      sub: user.id,
-      username: user.username,
-      role: user.role,
-    };
+  private async issueTokens(
+    userId: string,
+    username: string,
+    roles: string[],
+  ) {
+    const payload: JwtPayload = { sub: userId, username, roles };
 
     const accessToken = await this.jwt.signAsync(payload, {
       secret: this.config.get<string>('JWT_ACCESS_SECRET'),
@@ -90,7 +92,7 @@ export class AuthService {
 
     await this.prisma.refreshToken.create({
       data: {
-        userId: user.id,
+        userId,
         tokenHash: refreshTokenHash,
         expiresAt,
       },

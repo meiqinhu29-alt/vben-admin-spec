@@ -10,7 +10,10 @@ export class UsersService {
   async findById(id: string) {
     return this.prisma.user.findUnique({
       where: { id },
-      include: { shopAccess: { select: { shopId: true } } },
+      include: {
+        shopAccess: { select: { shopId: true } },
+        userRoles: { include: { role: { select: { code: true, name: true } } } },
+      },
     });
   }
 

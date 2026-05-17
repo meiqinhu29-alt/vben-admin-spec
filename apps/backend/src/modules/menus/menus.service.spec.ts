@@ -28,14 +28,34 @@ describe('menusService', () => {
   describe('listTree', () => {
     it('builds correct tree structure', async () => {
       const menus = [
-        { id: '1', parentId: null, name: 'System', sortOrder: 0,
-          createdAt: new Date() },
-        { id: '2', parentId: '1', name: 'Users', sortOrder: 0,
-          createdAt: new Date() },
-        { id: '3', parentId: '1', name: 'Roles', sortOrder: 1,
-          createdAt: new Date() },
-        { id: '4', parentId: null, name: 'Dashboard', sortOrder: 1,
-          createdAt: new Date() },
+        {
+          id: '1',
+          parentId: null,
+          name: 'System',
+          sortOrder: 0,
+          createdAt: new Date(),
+        },
+        {
+          id: '2',
+          parentId: '1',
+          name: 'Users',
+          sortOrder: 0,
+          createdAt: new Date(),
+        },
+        {
+          id: '3',
+          parentId: '1',
+          name: 'Roles',
+          sortOrder: 1,
+          createdAt: new Date(),
+        },
+        {
+          id: '4',
+          parentId: null,
+          name: 'Dashboard',
+          sortOrder: 1,
+          createdAt: new Date(),
+        },
       ];
       prisma.menu.findMany.mockResolvedValue(menus);
 
@@ -107,9 +127,7 @@ describe('menusService', () => {
     it('throws NotFoundException when menu does not exist', async () => {
       prisma.menu.findUnique.mockResolvedValue(null);
 
-      await expect(service.remove('999')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.remove('999')).rejects.toThrow(NotFoundException);
     });
 
     it('succeeds when no children', async () => {

@@ -1,6 +1,6 @@
 import process from 'node:process';
 
-import { PrismaClient, UserRole, UserStatus } from '@prisma/client';
+import { PrismaClient, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -15,7 +15,6 @@ async function main() {
       username: 'admin',
       passwordHash,
       displayName: '系统管理员',
-      role: UserRole.admin,
       status: UserStatus.active,
     },
   });
