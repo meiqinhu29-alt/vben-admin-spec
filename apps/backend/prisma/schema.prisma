@@ -35,6 +35,21 @@ enum PermissionEffect {
   deny
 }
 
+enum ReportStatus {
+  pending
+  audited
+  locked
+}
+
+enum AuditAction {
+  submit
+  edit
+  audit
+  reject
+  lock
+  unlock
+}
+
 enum BrandStatus {
   active
   inactive
@@ -54,10 +69,13 @@ model User {
   createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz
 
-  refreshTokens   RefreshToken[]
-  shopAccess      UserShopAccess[]
-  userRoles       UserRoleRelation[]
-  userPermissions UserPermission[]
+  refreshTokens        RefreshToken[]
+  shopAccess           UserShopAccess[]
+  userRoles            UserRoleRelation[]
+  userPermissions      UserPermission[]
+  reportsCreated       DailyFundsReport[]   @relation("ReportCreator")
+  attachmentsUploaded  ReportAttachment[]   @relation("AttachmentUploader")
+  auditLogsOperated    AuditLog[]           @relation("AuditOperator")
 
   @@map("users")
 }
@@ -117,8 +135,9 @@ model Shop {
   createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz
 
-  brand      Brand            @relation(fields: [brandId], references: [id], onDelete: Restrict)
-  userAccess UserShopAccess[]
+  brand        Brand              @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  userAccess   UserShopAccess[]
+  dailyReports DailyFundsReport[]
 
   @@index([brandId])
   @@map("shops")
@@ -195,4 +214,83 @@ model UserPermission {
 
   @@unique([userId, authCode])
   @@map("user_permissions")
+}
+
+model DailyFundsReport {
+  id                 String       @id @default(uuid()) @db.Uuid
+  shopId             String       @map("shop_id") @db.Uuid
+  reportDate         DateTime     @map("report_date") @db.Date
+
+  openingBalance     Decimal      @default(0) @map("opening_balance") @db.Decimal(14, 2)
+  revenue            Decimal      @default(0) @db.Decimal(14, 2)
+  cardFee            Decimal      @default(0) @map("card_fee") @db.Decimal(14, 2)
+  actualRevenue      Decimal      @default(0) @map("actual_revenue") @db.Decimal(14, 2)
+  transferToCompany  Decimal      @default(0) @map("transfer_to_company") @db.Decimal(14, 2)
+  depositToCompany   Decimal      @default(0) @map("deposit_to_company") @db.Decimal(14, 2)
+  payToOwner         Decimal      @default(0) @map("pay_to_owner") @db.Decimal(14, 2)
+  shopExpense        Decimal      @default(0) @map("shop_expense") @db.Decimal(14, 2)
+  closingBalance     Decimal      @default(0) @map("closing_balance") @db.Decimal(14, 2)
+
+  topupIncome        Decimal      @default(0) @map("topup_income") @db.Decimal(14, 2)
+  mallSettlement     Decimal      @default(0) @map("mall_settlement") @db.Decimal(14, 2)
+  otherCompanyIncome Decimal      @default(0) @map("other_company_income") @db.Decimal(14, 2)
+  companyToOwner     Decimal      @default(0) @map("company_to_owner") @db.Decimal(14, 2)
+  cardPayment        Decimal      @default(0) @map("card_payment") @db.Decimal(14, 2)
+  companyBonus       Decimal      @default(0) @map("company_bonus") @db.Decimal(14, 2)
+
+  remark             String?      @db.VarChar(500)
+  status             ReportStatus @default(pending)
+
+  createdBy          String       @map("created_by") @db.Uuid
+  auditedBy          String?      @map("audited_by") @db.Uuid
+  auditedAt          DateTime?    @map("audited_at") @db.Timestamptz
+  lockedBy           String?      @map("locked_by") @db.Uuid
+  lockedAt           DateTime?    @map("locked_at") @db.Timestamptz
+  createdAt          DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt          DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  shop          Shop               @relation(fields: [shopId], references: [id], onDelete: Restrict)
+  createdByUser User               @relation("ReportCreator", fields: [createdBy], references: [id])
+  attachments   ReportAttachment[]
+  auditLogs     AuditLog[]
+
+  @@unique([shopId, reportDate])
+  @@index([shopId, reportDate])
+  @@map("daily_funds_reports")
+}
+
+model ReportAttachment {
+  id         String    @id @default(uuid()) @db.Uuid
+  reportId   String    @map("report_id") @db.Uuid
+  fieldName  String    @map("field_name") @db.VarChar(100)
+  url        String    @db.VarChar(500)
+  fileName   String    @map("file_name") @db.VarChar(200)
+  fileSize   Int       @map("file_size")
+  uploadedBy String    @map("uploaded_by") @db.Uuid
+  uploadedAt DateTime  @default(now()) @map("uploaded_at") @db.Timestamptz
+  deletedAt  DateTime? @map("deleted_at") @db.Timestamptz
+
+  report   DailyFundsReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  uploader User             @relation("AttachmentUploader", fields: [uploadedBy], references: [id])
+
+  @@index([reportId])
+  @@map("report_attachments")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid()) @db.Uuid
+  reportId   String      @map("report_id") @db.Uuid
+  operatorId String      @map("operator_id") @db.Uuid
+  action     AuditAction
+  fromStatus String?     @map("from_status") @db.VarChar(20)
+  toStatus   String?     @map("to_status") @db.VarChar(20)
+  diff       Json?
+  comment    String?     @db.VarChar(500)
+  createdAt  DateTime    @default(now()) @map("created_at") @db.Timestamptz
+
+  report   DailyFundsReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  operator User             @relation("AuditOperator", fields: [operatorId], references: [id])
+
+  @@index([reportId])
+  @@map("audit_logs")
 }
