@@ -61,15 +61,24 @@ describe('users (e2e)', () => {
   });
 
   it('returns user with shop ids when bound', async () => {
-    const user = await prisma.user.findUnique({
+    const user = await prisma.user.findUniqueOrThrow({
       where: { username: 'infouser' },
     });
-    if (!user) throw new Error('test setup failure');
+
+    const brand = await prisma.brand.create({
+      data: { code: 'TEST', name: 'Test Brand' },
+    });
+    const shop1 = await prisma.shop.create({
+      data: { code: 'S1', name: 'Shop 1', brandId: brand.id },
+    });
+    const shop2 = await prisma.shop.create({
+      data: { code: 'S2', name: 'Shop 2', brandId: brand.id },
+    });
 
     await prisma.userShopAccess.createMany({
       data: [
-        { userId: user.id, shopId: '00000000-0000-0000-0000-000000000001' },
-        { userId: user.id, shopId: '00000000-0000-0000-0000-000000000002' },
+        { userId: user.id, shopId: shop1.id },
+        { userId: user.id, shopId: shop2.id },
       ],
     });
 
