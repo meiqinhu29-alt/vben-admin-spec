@@ -36,11 +36,8 @@ export class DailyReportsController {
     return this.reports.create(dto, user.userId);
   }
 
-  @Get('opening-balance')
-  getOpeningBalance(
-    @Query('shopId') shopId: string,
-    @Query('date') date: string,
-  ) {
+  @Get('balance')
+  getBalance(@Query('shopId') shopId: string, @Query('date') date: string) {
     return this.reports.getOpeningBalance(shopId, new Date(date));
   }
 

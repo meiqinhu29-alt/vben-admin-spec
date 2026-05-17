@@ -31,13 +31,27 @@ describe('brands (e2e)', () => {
     const passwordHash = await bcrypt.hash('test123', 10);
     await prisma.user.createMany({
       data: [
-        { username: 'admin1', passwordHash, displayName: 'Admin', status: 'active' },
-        { username: 'staff1', passwordHash, displayName: 'Staff', status: 'active' },
+        {
+          username: 'admin1',
+          passwordHash,
+          displayName: 'Admin',
+          status: 'active',
+        },
+        {
+          username: 'staff1',
+          passwordHash,
+          displayName: 'Staff',
+          status: 'active',
+        },
       ],
     });
 
-    const admin = await prisma.user.findUniqueOrThrow({ where: { username: 'admin1' } });
-    const staff = await prisma.user.findUniqueOrThrow({ where: { username: 'staff1' } });
+    const admin = await prisma.user.findUniqueOrThrow({
+      where: { username: 'admin1' },
+    });
+    const staff = await prisma.user.findUniqueOrThrow({
+      where: { username: 'staff1' },
+    });
 
     await assignRole(prisma, admin.id, adminRole.id);
     await assignRole(prisma, staff.id, staffRole.id);
