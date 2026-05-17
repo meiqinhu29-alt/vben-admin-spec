@@ -35,6 +35,16 @@ enum PermissionEffect {
   deny
 }
 
+enum BrandStatus {
+  active
+  inactive
+}
+
+enum ShopStatus {
+  active
+  inactive
+}
+
 model User {
   id            String     @id @default(uuid()) @db.Uuid
   username      String     @unique @db.VarChar(50)
@@ -74,9 +84,44 @@ model UserShopAccess {
   shopId String @map("shop_id") @db.Uuid
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  shop Shop @relation(fields: [shopId], references: [id], onDelete: Cascade)
 
   @@id([userId, shopId])
   @@map("user_shop_access")
+}
+
+model Brand {
+  id        String      @id @default(uuid()) @db.Uuid
+  code      String      @unique @db.VarChar(20)
+  name      String      @db.VarChar(100)
+  logoUrl   String?     @map("logo_url") @db.VarChar(500)
+  status    BrandStatus @default(active)
+  createdAt DateTime    @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime    @updatedAt @map("updated_at") @db.Timestamptz
+
+  shops Shop[]
+
+  @@map("brands")
+}
+
+model Shop {
+  id              String     @id @default(uuid()) @db.Uuid
+  code            String     @unique @db.VarChar(20)
+  name            String     @db.VarChar(100)
+  brandId         String     @map("brand_id") @db.Uuid
+  initialBalance  Decimal    @default(0) @map("initial_balance") @db.Decimal(14, 2)
+  address         String?    @db.VarChar(500)
+  contactName     String?    @map("contact_name") @db.VarChar(100)
+  contactPhone    String?    @map("contact_phone") @db.VarChar(50)
+  status          ShopStatus @default(active)
+  createdAt       DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  brand      Brand            @relation(fields: [brandId], references: [id], onDelete: Restrict)
+  userAccess UserShopAccess[]
+
+  @@index([brandId])
+  @@map("shops")
 }
 
 model Role {
