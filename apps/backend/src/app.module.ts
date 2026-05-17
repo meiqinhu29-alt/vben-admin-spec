@@ -4,14 +4,15 @@ import { APP_GUARD } from '@nestjs/core';
 
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
+import { AttachmentsModule } from './modules/attachments/attachments.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BrandsModule } from './modules/brands/brands.module';
 import { DailyReportsModule } from './modules/daily-reports/daily-reports.module';
-import { SummaryModule } from './modules/summary/summary.module';
 import { MenusModule } from './modules/menus/menus.module';
 import { PermissionsModule } from './modules/permissions/permissions.module';
 import { RolesModule } from './modules/roles/roles.module';
 import { ShopsModule } from './modules/shops/shops.module';
+import { SummaryModule } from './modules/summary/summary.module';
 import { UsersModule } from './modules/users/users.module';
 import { PrismaService } from './prisma/prisma.service';
 
@@ -28,6 +29,7 @@ import { PrismaService } from './prisma/prisma.service';
     ShopsModule,
     DailyReportsModule,
     SummaryModule,
+    AttachmentsModule,
   ],
   providers: [
     PrismaService,

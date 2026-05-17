@@ -23,6 +23,8 @@ import {
 } from '#/api/finance';
 import { listShopsApi } from '#/api/system';
 
+import FieldAttachment from './field-attachment.vue';
+
 defineOptions({ name: 'ReportFormModal' });
 
 const props = defineProps<{
@@ -166,7 +168,9 @@ async function handleSubmit() {
     return;
   }
   submitting.value = true;
-  const date = new Date(formModel.reportDate ?? Date.now()).toISOString().slice(0, 10);
+  const date = new Date(formModel.reportDate ?? Date.now())
+    .toISOString()
+    .slice(0, 10);
   const payload = {
     shopId: formModel.shopId,
     reportDate: date,
@@ -259,32 +263,64 @@ function handleClose() {
         <NInput :value="actualRevenue.toFixed(2)" disabled />
       </NFormItem>
       <NFormItem label="刷给公司">
-        <NInputNumber
-          v-model:value="formModel.transferToCompany"
-          :precision="2"
-          style="width: 100%"
-        />
+        <NSpace vertical style="width: 100%">
+          <NInputNumber
+            v-model:value="formModel.transferToCompany"
+            :precision="2"
+            style="width: 100%"
+          />
+          <FieldAttachment
+            v-if="isEdit && props.report"
+            :report-id="props.report.id"
+            field-name="transferToCompany"
+            label="凭证"
+          />
+        </NSpace>
       </NFormItem>
       <NFormItem label="转/存公司">
-        <NInputNumber
-          v-model:value="formModel.depositToCompany"
-          :precision="2"
-          style="width: 100%"
-        />
+        <NSpace vertical style="width: 100%">
+          <NInputNumber
+            v-model:value="formModel.depositToCompany"
+            :precision="2"
+            style="width: 100%"
+          />
+          <FieldAttachment
+            v-if="isEdit && props.report"
+            :report-id="props.report.id"
+            field-name="depositToCompany"
+            label="凭证"
+          />
+        </NSpace>
       </NFormItem>
       <NFormItem label="店铺费用">
-        <NInputNumber
-          v-model:value="formModel.shopExpense"
-          :precision="2"
-          style="width: 100%"
-        />
+        <NSpace vertical style="width: 100%">
+          <NInputNumber
+            v-model:value="formModel.shopExpense"
+            :precision="2"
+            style="width: 100%"
+          />
+          <FieldAttachment
+            v-if="isEdit && props.report"
+            :report-id="props.report.id"
+            field-name="shopExpense"
+            label="凭证"
+          />
+        </NSpace>
       </NFormItem>
       <NFormItem label="交给老板款">
-        <NInputNumber
-          v-model:value="formModel.payToOwner"
-          :precision="2"
-          style="width: 100%"
-        />
+        <NSpace vertical style="width: 100%">
+          <NInputNumber
+            v-model:value="formModel.payToOwner"
+            :precision="2"
+            style="width: 100%"
+          />
+          <FieldAttachment
+            v-if="isEdit && props.report"
+            :report-id="props.report.id"
+            field-name="payToOwner"
+            label="凭证"
+          />
+        </NSpace>
       </NFormItem>
       <NFormItem label="期末余额">
         <NInput
