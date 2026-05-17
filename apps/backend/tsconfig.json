@@ -1,7 +1,7 @@
 {
   "extends": "@vben/tsconfig/library.json",
   "compilerOptions": {
-    "module": "ESNext",
+    "module": "CommonJS",
     "moduleResolution": "Bundler",
     "target": "ES2022",
     "lib": ["ES2022"],
