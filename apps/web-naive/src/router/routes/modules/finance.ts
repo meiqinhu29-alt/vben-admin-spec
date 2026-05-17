@@ -20,6 +20,15 @@ const routes: RouteRecordRaw[] = [
           title: '资金日报',
         },
       },
+      {
+        name: 'FundsSummary',
+        path: '/finance/summary',
+        component: () => import('#/views/finance/summary/index.vue'),
+        meta: {
+          icon: 'lucide:layout-grid',
+          title: '资金汇总表',
+        },
+      },
     ],
   },
 ];
