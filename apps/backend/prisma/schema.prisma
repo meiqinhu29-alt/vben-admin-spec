@@ -7,17 +7,32 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserRole {
-  staff
-  manager
-  finance
-  boss
-  admin
-}
-
 enum UserStatus {
   active
   disabled
+}
+
+enum RoleStatus {
+  active
+  inactive
+}
+
+enum MenuType {
+  catalog
+  menu
+  button
+  link
+  embedded
+}
+
+enum MenuStatus {
+  active
+  inactive
+}
+
+enum PermissionEffect {
+  grant
+  deny
 }
 
 model User {
@@ -25,13 +40,14 @@ model User {
   username      String     @unique @db.VarChar(50)
   passwordHash  String     @map("password_hash") @db.VarChar(120)
   displayName   String     @map("display_name") @db.VarChar(100)
-  role          UserRole
   status        UserStatus @default(active)
   createdAt     DateTime   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt     DateTime   @updatedAt @map("updated_at") @db.Timestamptz
 
-  refreshTokens RefreshToken[]
-  shopAccess    UserShopAccess[]
+  refreshTokens   RefreshToken[]
+  shopAccess      UserShopAccess[]
+  userRoles       UserRoleRelation[]
+  userPermissions UserPermission[]
 
   @@map("users")
 }
@@ -61,4 +77,77 @@ model UserShopAccess {
 
   @@id([userId, shopId])
   @@map("user_shop_access")
+}
+
+model Role {
+  id          String     @id @default(uuid()) @db.Uuid
+  code        String     @unique @db.VarChar(50)
+  name        String     @db.VarChar(100)
+  description String?    @db.VarChar(500)
+  status      RoleStatus @default(active)
+  isSystem    Boolean    @default(false) @map("is_system")
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  roleMenus  RoleMenu[]
+  userRoles  UserRoleRelation[]
+
+  @@map("roles")
+}
+
+model Menu {
+  id        String     @id @default(uuid()) @db.Uuid
+  parentId  String?    @map("parent_id") @db.Uuid
+  type      MenuType
+  name      String     @db.VarChar(100)
+  path      String?    @db.VarChar(200)
+  component String?    @db.VarChar(200)
+  authCode  String?    @unique @map("auth_code") @db.VarChar(100)
+  meta      Json       @default("{}")
+  status    MenuStatus @default(active)
+  sortOrder Int        @default(0) @map("sort_order")
+  createdAt DateTime   @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime   @updatedAt @map("updated_at") @db.Timestamptz
+
+  parent   Menu?  @relation("MenuTree", fields: [parentId], references: [id])
+  children Menu[] @relation("MenuTree")
+
+  roleMenus RoleMenu[]
+
+  @@index([parentId])
+  @@map("menus")
+}
+
+model RoleMenu {
+  roleId String @map("role_id") @db.Uuid
+  menuId String @map("menu_id") @db.Uuid
+
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  menu Menu @relation(fields: [menuId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, menuId])
+  @@map("role_menus")
+}
+
+model UserRoleRelation {
+  userId String @map("user_id") @db.Uuid
+  roleId String @map("role_id") @db.Uuid
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model UserPermission {
+  id       String           @id @default(uuid()) @db.Uuid
+  userId   String           @map("user_id") @db.Uuid
+  authCode String           @map("auth_code") @db.VarChar(100)
+  effect   PermissionEffect
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, authCode])
+  @@map("user_permissions")
 }
