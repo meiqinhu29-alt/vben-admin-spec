@@ -5,7 +5,12 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { PrismaService } from '../../src/prisma/prisma.service';
-import { createTestApp, truncateAll } from './test-helpers';
+import {
+  assignRole,
+  createTestApp,
+  createTestRole,
+  truncateAll,
+} from './test-helpers';
 
 describe('auth (e2e)', () => {
   let app: INestApplication;
@@ -17,15 +22,16 @@ describe('auth (e2e)', () => {
 
   beforeEach(async () => {
     await truncateAll(prisma);
-    await prisma.user.create({
+    const staffRole = await createTestRole(prisma, 'staff', 'Staff');
+    const user = await prisma.user.create({
       data: {
         username: 'testuser',
         passwordHash: await bcrypt.hash('test123', 10),
         displayName: 'Test User',
-        role: 'staff',
         status: 'active',
       },
     });
+    await assignRole(prisma, user.id, staffRole.id);
   });
 
   afterAll(async () => {

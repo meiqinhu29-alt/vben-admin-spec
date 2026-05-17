@@ -27,10 +27,36 @@ export async function createTestApp(): Promise<{
   return { app, prisma };
 }
 
+export async function createTestRole(
+  prisma: PrismaService,
+  code: string,
+  name: string,
+  isSystem = false,
+) {
+  return prisma.role.create({
+    data: { code, name, status: 'active', isSystem },
+  });
+}
+
+export async function assignRole(
+  prisma: PrismaService,
+  userId: string,
+  roleId: string,
+) {
+  return prisma.userRoleRelation.create({
+    data: { userId, roleId },
+  });
+}
+
 export async function truncateAll(prisma: PrismaService) {
   await prisma.$transaction([
+    prisma.userPermission.deleteMany({}),
+    prisma.roleMenu.deleteMany({}),
+    prisma.userRoleRelation.deleteMany({}),
     prisma.refreshToken.deleteMany({}),
     prisma.userShopAccess.deleteMany({}),
+    prisma.menu.deleteMany({}),
+    prisma.role.deleteMany({}),
     prisma.user.deleteMany({}),
   ]);
 }

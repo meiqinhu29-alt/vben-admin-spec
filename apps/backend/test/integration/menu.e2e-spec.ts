@@ -5,7 +5,12 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { PrismaService } from '../../src/prisma/prisma.service';
-import { createTestApp, truncateAll } from './test-helpers';
+import {
+  assignRole,
+  createTestApp,
+  createTestRole,
+  truncateAll,
+} from './test-helpers';
 
 describe('menu (e2e)', () => {
   let app: INestApplication;
@@ -20,22 +25,78 @@ describe('menu (e2e)', () => {
   beforeEach(async () => {
     await truncateAll(prisma);
     const passwordHash = await bcrypt.hash('test123', 10);
+
+    // Create roles
+    const adminRole = await createTestRole(prisma, 'admin', 'Admin', true);
+    const staffRole = await createTestRole(prisma, 'staff', 'Staff');
+
+    // Create users without role field
     await prisma.user.createMany({
       data: [
         {
           username: 'staff1',
           passwordHash,
           displayName: 'Staff One',
-          role: 'staff',
           status: 'active',
         },
         {
           username: 'admin1',
           passwordHash,
           displayName: 'Admin One',
-          role: 'admin',
           status: 'active',
         },
+      ],
+    });
+
+    const staff = await prisma.user.findUniqueOrThrow({
+      where: { username: 'staff1' },
+    });
+    const admin = await prisma.user.findUniqueOrThrow({
+      where: { username: 'admin1' },
+    });
+
+    await assignRole(prisma, staff.id, staffRole.id);
+    await assignRole(prisma, admin.id, adminRole.id);
+
+    // Create menus
+    const dashboard = await prisma.menu.create({
+      data: {
+        type: 'menu',
+        name: 'Dashboard',
+        path: '/dashboard',
+        sortOrder: 1,
+        status: 'active',
+      },
+    });
+    const reports = await prisma.menu.create({
+      data: {
+        type: 'menu',
+        name: 'Reports',
+        path: '/reports',
+        authCode: 'report:create',
+        sortOrder: 2,
+        status: 'active',
+      },
+    });
+    const system = await prisma.menu.create({
+      data: {
+        type: 'menu',
+        name: 'System',
+        path: '/system',
+        authCode: 'user:manage',
+        sortOrder: 3,
+        status: 'active',
+      },
+    });
+
+    // Assign menus to roles via role_menus
+    await prisma.roleMenu.createMany({
+      data: [
+        { roleId: staffRole.id, menuId: dashboard.id },
+        { roleId: staffRole.id, menuId: reports.id },
+        { roleId: adminRole.id, menuId: dashboard.id },
+        { roleId: adminRole.id, menuId: reports.id },
+        { roleId: adminRole.id, menuId: system.id },
       ],
     });
 

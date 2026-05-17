@@ -5,7 +5,12 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { PrismaService } from '../../src/prisma/prisma.service';
-import { createTestApp, truncateAll } from './test-helpers';
+import {
+  assignRole,
+  createTestApp,
+  createTestRole,
+  truncateAll,
+} from './test-helpers';
 
 describe('users (e2e)', () => {
   let app: INestApplication;
@@ -18,15 +23,16 @@ describe('users (e2e)', () => {
 
   beforeEach(async () => {
     await truncateAll(prisma);
-    await prisma.user.create({
+    const financeRole = await createTestRole(prisma, 'finance', 'Finance');
+    const user = await prisma.user.create({
       data: {
         username: 'infouser',
         passwordHash: await bcrypt.hash('pwd123456', 10),
         displayName: '信息用户',
-        role: 'finance',
         status: 'active',
       },
     });
+    await assignRole(prisma, user.id, financeRole.id);
     const login = await request(app.getHttpServer())
       .post('/api/auth/login')
       .send({ username: 'infouser', password: 'pwd123456' });
@@ -45,7 +51,7 @@ describe('users (e2e)', () => {
     expect(res.status).toBe(200);
     const body = res.body.data;
     expect(body.username).toBe('infouser');
-    expect(body.role).toBe('finance');
+    expect(body.roles).toEqual(['finance']);
     expect(body.shopIds).toEqual([]);
   });
 
