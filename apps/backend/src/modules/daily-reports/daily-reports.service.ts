@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 
+import { DataScopeService } from '../../common/services/data-scope.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BalanceCalculatorService } from './balance-calculator.service';
 import { CreateDailyReportDto } from './dto/create-daily-report.dto';
@@ -20,6 +21,7 @@ interface ListQuery {
   dateTo?: string;
   page?: number;
   pageSize?: number;
+  userId?: string; // 用于权限过滤
 }
 
 @Injectable()
@@ -27,6 +29,7 @@ export class DailyReportsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly calculator: BalanceCalculatorService,
+    private readonly dataScope: DataScopeService,
   ) {}
 
   async cascadeRecalculate(shopId: string, fromDate: Date, _userId: string) {
@@ -126,12 +129,24 @@ export class DailyReportsService {
     return report;
   }
 
-  async getById(id: string) {
+  async getById(id: string, userId?: string) {
     const report = await this.prisma.dailyFundsReport.findUnique({
       where: { id },
       include: { attachments: { where: { deletedAt: null } } },
     });
     if (!report) throw new NotFoundException('Report not found');
+
+    // 应用数据范围检查
+    if (userId) {
+      const scope = await this.dataScope.resolveUserScope(userId);
+      if (scope.scope === 'shop' && !scope.shopIds.includes(report.shopId)) {
+        throw new NotFoundException('Report not found');
+      }
+      if (scope.scope === 'self' && report.createdBy !== userId) {
+        throw new NotFoundException('Report not found');
+      }
+    }
+
     return report;
   }
 
@@ -160,6 +175,7 @@ export class DailyReportsService {
       dateTo,
       page = 1,
       pageSize = 20,
+      userId,
     } = query;
     const where: any = {};
     if (shopIds?.length) where.shopId = { in: shopIds };
@@ -171,6 +187,35 @@ export class DailyReportsService {
       if (dateFrom) where.reportDate.gte = new Date(dateFrom);
       if (dateTo) where.reportDate.lte = new Date(dateTo);
     }
+
+    // 应用数据范围过滤
+    if (userId) {
+      const scope = await this.dataScope.resolveUserScope(userId);
+      if (scope.scope === 'shop') {
+        // 与已有 shopId 过滤求交集（若用户传了 shopId 不在自己范围内 → 返回空）
+        const allowedIds = scope.shopIds;
+        if (allowedIds.length === 0) {
+          return { total: 0, items: [], page, pageSize };
+        }
+        if (where.shopId?.in) {
+          where.shopId.in = where.shopId.in.filter((id: string) =>
+            allowedIds.includes(id),
+          );
+          if (where.shopId.in.length === 0) {
+            return { total: 0, items: [], page, pageSize };
+          }
+        } else if (where.shopId) {
+          if (!allowedIds.includes(where.shopId)) {
+            return { total: 0, items: [], page, pageSize };
+          }
+        } else {
+          where.shopId = { in: allowedIds };
+        }
+      } else if (scope.scope === 'self') {
+        where.createdBy = userId;
+      }
+    }
+
     const [total, items] = await Promise.all([
       this.prisma.dailyFundsReport.count({ where }),
       this.prisma.dailyFundsReport.findMany({

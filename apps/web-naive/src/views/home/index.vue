@@ -12,6 +12,7 @@ import {
   AnalysisOverview,
   WorkbenchQuickNav,
 } from '@vben/common-ui';
+import { useAccess } from '@vben/access';
 import {
   SvgBellIcon,
   SvgCakeIcon,
@@ -29,21 +30,22 @@ defineOptions({ name: 'Home' });
 
 const router = useRouter();
 const userStore = useUserStore();
+const { hasAccessByCodes } = useAccess();
 
 const userRoles = computed(() => userStore.userRoles ?? []);
-const isAdmin = computed(() => userRoles.value.includes('admin'));
-const isFinance = computed(
-  () => userRoles.value.includes('finance') || isAdmin.value,
-);
-const isBoss = computed(
-  () => userRoles.value.includes('boss') || isAdmin.value,
-);
-const isManager = computed(
-  () => userRoles.value.includes('manager') || isFinance.value,
-);
 
-// 是否显示资金统计概览（财务/老板/管理员能看到全局数据）
-const canViewStats = computed(() => isFinance.value || isBoss.value);
+// 基于 authCode 的权限判断
+const canViewSummary = computed(() => hasAccessByCodes(['finance:summary']));
+const canViewDaily = computed(() => hasAccessByCodes(['finance:daily']));
+const canManageUser = computed(() => hasAccessByCodes(['system:user']));
+const canManageShop = computed(() => hasAccessByCodes(['system:shop']));
+const canManageRole = computed(() => hasAccessByCodes(['system:role']));
+const canManageBrand = computed(() => hasAccessByCodes(['system:brand']));
+
+// 是否显示资金统计概览（有汇总权限即可见）
+const canViewStats = computed(() => canViewSummary.value);
+// 最近日报需要日报权限
+const canViewRecent = computed(() => canViewDaily.value);
 
 const today = computed(() => {
   const now = new Date();
@@ -121,15 +123,16 @@ const overviewItems = computed<AnalysisOverviewItem[]>(() => [
 ]);
 
 const quickNavItems = computed<WorkbenchQuickNavItem[]>(() => {
-  const items: WorkbenchQuickNavItem[] = [
-    {
+  const items: WorkbenchQuickNavItem[] = [];
+  if (canViewDaily.value) {
+    items.push({
       color: '#1fdaca',
       icon: 'lucide:file-text',
       title: '资金日报',
       url: '/finance/daily',
-    },
-  ];
-  if (isFinance.value || isBoss.value) {
+    });
+  }
+  if (canViewSummary.value) {
     items.push({
       color: '#3fb27f',
       icon: 'lucide:bar-chart-3',
@@ -137,33 +140,37 @@ const quickNavItems = computed<WorkbenchQuickNavItem[]>(() => {
       url: '/finance/summary',
     });
   }
-  if (isAdmin.value) {
-    items.push(
-      {
-        color: '#e18525',
-        icon: 'lucide:users',
-        title: '用户管理',
-        url: '/system/user',
-      },
-      {
-        color: '#bf0c2c',
-        icon: 'lucide:store',
-        title: '店铺管理',
-        url: '/system/shop',
-      },
-      {
-        color: '#7c3aed',
-        icon: 'lucide:shield',
-        title: '角色管理',
-        url: '/system/role',
-      },
-      {
-        color: '#0891b2',
-        icon: 'lucide:tag',
-        title: '品牌管理',
-        url: '/system/brand',
-      },
-    );
+  if (canManageUser.value) {
+    items.push({
+      color: '#e18525',
+      icon: 'lucide:users',
+      title: '用户管理',
+      url: '/system/user',
+    });
+  }
+  if (canManageShop.value) {
+    items.push({
+      color: '#bf0c2c',
+      icon: 'lucide:store',
+      title: '店铺管理',
+      url: '/system/shop',
+    });
+  }
+  if (canManageRole.value) {
+    items.push({
+      color: '#7c3aed',
+      icon: 'lucide:shield',
+      title: '角色管理',
+      url: '/system/role',
+    });
+  }
+  if (canManageBrand.value) {
+    items.push({
+      color: '#0891b2',
+      icon: 'lucide:tag',
+      title: '品牌管理',
+      url: '/system/brand',
+    });
   }
   return items;
 });
@@ -258,7 +265,7 @@ onMounted(() => {
 
       <!-- 最近日报（仅店长以上可见） -->
       <AnalysisChartCard
-        v-if="isManager"
+        v-if="canViewRecent"
         class="mt-5 md:mt-0 md:w-1/2"
         title="最近日报"
       >
@@ -298,7 +305,7 @@ onMounted(() => {
     </div>
 
     <!-- 普通员工的提示信息 -->
-    <div v-if="!isManager && !canViewStats" class="mt-5 staff-tip card-box">
+    <div v-if="!canViewRecent && !canViewStats" class="mt-5 staff-tip card-box">
       <div class="staff-tip-icon">📝</div>
       <div>
         <h3 class="staff-tip-title">开始记录今日资金流水</h3>

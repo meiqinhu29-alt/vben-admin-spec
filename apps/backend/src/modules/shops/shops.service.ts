@@ -4,13 +4,17 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
+import { DataScopeService } from '../../common/services/data-scope.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
 
 @Injectable()
 export class ShopsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly dataScope: DataScopeService,
+  ) {}
 
   async create(dto: CreateShopDto) {
     const exists = await this.prisma.shop.findUnique({
@@ -29,12 +33,20 @@ export class ShopsService {
     });
   }
 
-  async getById(id: string) {
+  async getById(id: string, userId?: string) {
     const shop = await this.prisma.shop.findUnique({
       where: { id },
       include: { brand: { select: { id: true, code: true, name: true } } },
     });
     if (!shop) throw new NotFoundException('Shop not found');
+
+    if (userId) {
+      const scope = await this.dataScope.resolveUserScope(userId);
+      if (scope.scope === 'shop' && !scope.shopIds.includes(shop.id)) {
+        throw new NotFoundException('Shop not found');
+      }
+    }
+
     return shop;
   }
 
@@ -44,8 +56,16 @@ export class ShopsService {
     page?: number;
     pageSize?: number;
     status?: string;
+    userId?: string;
   }) {
-    const { brandId, keyword, page = 1, pageSize = 10, status } = query;
+    const {
+      brandId,
+      keyword,
+      page = 1,
+      pageSize = 10,
+      status,
+      userId,
+    } = query;
     const where: Record<string, any> = {};
 
     if (keyword) {
@@ -59,6 +79,17 @@ export class ShopsService {
     }
     if (brandId) {
       where.brandId = brandId;
+    }
+
+    // 数据范围过滤：shop/self 都按 UserShopAccess 限制
+    if (userId) {
+      const scope = await this.dataScope.resolveUserScope(userId);
+      if (scope.scope !== 'all') {
+        if (scope.shopIds.length === 0) {
+          return { items: [], total: 0, page, pageSize };
+        }
+        where.id = { in: scope.shopIds };
+      }
     }
 
     const [items, total] = await Promise.all([

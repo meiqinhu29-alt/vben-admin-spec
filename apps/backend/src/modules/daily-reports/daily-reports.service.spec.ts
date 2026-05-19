@@ -22,6 +22,10 @@ const mockPrisma = {
   auditLog: { create: vi.fn() },
 };
 
+const mockDataScope = {
+  resolveUserScope: vi.fn().mockResolvedValue({ scope: 'all', shopIds: [] }),
+};
+
 describe('dailyReportsService', () => {
   let service: DailyReportsService;
 
@@ -30,6 +34,7 @@ describe('dailyReportsService', () => {
     service = new DailyReportsService(
       mockPrisma as any,
       new BalanceCalculatorService(),
+      mockDataScope as any,
     );
   });
 

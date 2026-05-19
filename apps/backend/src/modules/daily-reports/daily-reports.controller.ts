@@ -50,12 +50,16 @@ export class DailyReportsController {
   }
 
   @Get(':id')
-  getById(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.reports.getById(id);
+  getById(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @CurrentUser() user: AuthUser,
+  ) {
+    return this.reports.getById(id, user.userId);
   }
 
   @Get()
   list(
+    @CurrentUser() user: AuthUser,
     @Query('shopId') shopId?: string,
     @Query('shopIds') shopIds?: string,
     @Query('status') status?: string,
@@ -74,6 +78,7 @@ export class DailyReportsController {
       dateTo,
       page: page ? Number(page) : undefined,
       pageSize: pageSize ? Number(pageSize) : undefined,
+      userId: user.userId,
     });
   }
 

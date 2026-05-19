@@ -11,6 +11,9 @@ import {
   Query,
 } from '@nestjs/common';
 
+import type { AuthUser } from '../../common/decorators/current-user.decorator';
+
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { CreateShopDto } from './dto/create-shop.dto';
 import { UpdateShopDto } from './dto/update-shop.dto';
@@ -27,12 +30,13 @@ export class ShopsController {
   }
 
   @Get(':id')
-  getById(@Param('id') id: string) {
-    return this.shopsService.getById(id);
+  getById(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    return this.shopsService.getById(id, user.userId);
   }
 
   @Get()
   list(
+    @CurrentUser() user: AuthUser,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
     @Query('keyword') keyword?: string,
@@ -45,6 +49,7 @@ export class ShopsController {
       keyword,
       status,
       brandId,
+      userId: user.userId,
     });
   }
 

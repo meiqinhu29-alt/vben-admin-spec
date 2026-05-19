@@ -25,7 +25,7 @@ describe('shopsService', () => {
 
   beforeEach(() => {
     prisma = makePrisma();
-    service = new ShopsService(prisma as any);
+    service = new ShopsService(prisma as any, { resolveUserScope: vi.fn().mockResolvedValue({ scope: 'all', shopIds: [] }) } as any);
   });
 
   describe('list', () => {

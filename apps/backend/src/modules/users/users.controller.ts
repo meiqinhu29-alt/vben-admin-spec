@@ -74,6 +74,7 @@ export class UsersController {
   @Get('users')
   @Roles('admin')
   listUsers(
+    @CurrentUser() user: AuthUser,
     @Query('page') page?: string,
     @Query('pageSize') pageSize?: string,
     @Query('keyword') keyword?: string,
@@ -84,6 +85,7 @@ export class UsersController {
       pageSize: pageSize ? Number(pageSize) : undefined,
       keyword,
       status,
+      userId: user.userId,
     });
   }
 

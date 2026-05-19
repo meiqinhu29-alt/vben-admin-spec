@@ -6,7 +6,7 @@ import type { DailyReport } from '#/api/finance';
 import { computed, h, onMounted, reactive, ref } from 'vue';
 
 import { Page } from '@vben/common-ui';
-import { useUserStore } from '@vben/stores';
+import { useAccess } from '@vben/access';
 
 import {
   NButton,
@@ -39,14 +39,15 @@ import ReportFormModal from './components/report-form-modal.vue';
 defineOptions({ name: 'DailyReportList' });
 
 const message = useMessage();
-const userStore = useUserStore();
+const { hasAccessByCodes } = useAccess();
 
-const roles = computed(() => userStore.userRoles ?? []);
-const isAdmin = computed(() => roles.value.includes('admin'));
-const isFinance = computed(
-  () => roles.value.includes('finance') || isAdmin.value,
-);
-const isBoss = computed(() => roles.value.includes('boss') || isAdmin.value);
+const canCreate = computed(() => hasAccessByCodes(['report:create']));
+const canEdit = computed(() => hasAccessByCodes(['report:edit']));
+const canDelete = computed(() => hasAccessByCodes(['report:delete']));
+const canAudit = computed(() => hasAccessByCodes(['report:audit']));
+const canReject = computed(() => hasAccessByCodes(['report:reject']));
+const canLock = computed(() => hasAccessByCodes(['report:lock']));
+const canUnlock = computed(() => hasAccessByCodes(['report:unlock']));
 
 const loading = ref(false);
 const data = ref<DailyReport[]>([]);
@@ -254,14 +255,16 @@ const columns: DataTableColumns<DailyReport> = [
     render(row) {
       const btns: any[] = [];
       if (row.status === 'pending') {
-        btns.push(
-          h(
-            NButton,
-            { size: 'small', onClick: () => handleEdit(row) },
-            () => '编辑',
-          ),
-        );
-        if (isFinance.value) {
+        if (canEdit.value) {
+          btns.push(
+            h(
+              NButton,
+              { size: 'small', onClick: () => handleEdit(row) },
+              () => '编辑',
+            ),
+          );
+        }
+        if (canAudit.value) {
           btns.push(
             h(
               NPopconfirm,
@@ -274,19 +277,21 @@ const columns: DataTableColumns<DailyReport> = [
             ),
           );
         }
-        btns.push(
-          h(
-            NPopconfirm,
-            { onPositiveClick: () => handleDelete(row) },
-            {
-              trigger: () =>
-                h(NButton, { size: 'small', type: 'error' }, () => '删除'),
-              default: () => '确认删除该日报？',
-            },
-          ),
-        );
+        if (canDelete.value) {
+          btns.push(
+            h(
+              NPopconfirm,
+              { onPositiveClick: () => handleDelete(row) },
+              {
+                trigger: () =>
+                  h(NButton, { size: 'small', type: 'error' }, () => '删除'),
+                default: () => '确认删除该日报？',
+              },
+            ),
+          );
+        }
       } else if (row.status === 'audited') {
-        if (isFinance.value) {
+        if (canReject.value) {
           btns.push(
             h(
               NPopconfirm,
@@ -298,7 +303,7 @@ const columns: DataTableColumns<DailyReport> = [
             ),
           );
         }
-        if (isBoss.value) {
+        if (canLock.value) {
           btns.push(
             h(
               NPopconfirm,
@@ -311,7 +316,7 @@ const columns: DataTableColumns<DailyReport> = [
             ),
           );
         }
-      } else if (row.status === 'locked' && isAdmin.value) {
+      } else if (row.status === 'locked' && canUnlock.value) {
         btns.push(
           h(
             NPopconfirm,
@@ -339,7 +344,7 @@ onMounted(async () => {
 <template>
   <Page title="资金日报" description="门店每日资金流水记录">
     <template #extra>
-      <NButton type="primary" @click="handleCreate">添加</NButton>
+      <NButton v-if="canCreate" type="primary" @click="handleCreate">添加</NButton>
     </template>
 
     <NSpace vertical :size="16">

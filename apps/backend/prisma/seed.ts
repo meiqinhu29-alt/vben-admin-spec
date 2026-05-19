@@ -23,11 +23,11 @@ async function main() {
 
   // 1. Create system roles
   const roleData = [
-    { code: 'admin', name: '系统管理员' },
-    { code: 'boss', name: '老板' },
-    { code: 'finance', name: '财务' },
-    { code: 'manager', name: '店长' },
-    { code: 'staff', name: '员工' },
+    { code: 'admin', name: '系统管理员', dataScope: 'all' as const },
+    { code: 'boss', name: '老板', dataScope: 'shop' as const },
+    { code: 'finance', name: '财务', dataScope: 'shop' as const },
+    { code: 'manager', name: '店长', dataScope: 'shop' as const },
+    { code: 'staff', name: '员工', dataScope: 'self' as const },
   ];
 
   const roles = {} as Record<string, { id: string }>;
@@ -159,7 +159,67 @@ async function main() {
     },
   });
 
+  // 2.5 按钮型权限点（authCode）— 供前端 hasAccessByCodes 检查
+  // 资金日报操作按钮
+  const dailyReportButtons = [
+    { authCode: 'report:create', name: '创建日报' },
+    { authCode: 'report:edit', name: '编辑日报' },
+    { authCode: 'report:delete', name: '删除日报' },
+    { authCode: 'report:audit', name: '审核日报' },
+    { authCode: 'report:reject', name: '反审日报' },
+    { authCode: 'report:lock', name: '锁定日报' },
+    { authCode: 'report:unlock', name: '解锁日报' },
+  ];
+  const reportButtonMenus: Record<string, { id: string }> = {};
+  for (const [i, btn] of dailyReportButtons.entries()) {
+    reportButtonMenus[btn.authCode] = await prisma.menu.create({
+      data: {
+        parentId: dailyReportMenu.id,
+        type: MenuType.button,
+        name: btn.name,
+        authCode: btn.authCode,
+        meta: { title: btn.name },
+        sortOrder: i + 1,
+      },
+    });
+  }
+
+  // 资金汇总按钮
+  const summaryExportBtn = await prisma.menu.create({
+    data: {
+      parentId: summaryMenu.id,
+      type: MenuType.button,
+      name: '导出汇总',
+      authCode: 'summary:export',
+      meta: { title: '导出汇总' },
+      sortOrder: 1,
+    },
+  });
+
+  // 系统管理操作按钮（admin 专属）
+  const sysButtons = [
+    { authCode: 'system:user:manage', parent: userMenu, name: '管理用户' },
+    { authCode: 'system:role:manage', parent: roleMenu, name: '管理角色' },
+    { authCode: 'system:shop:manage', parent: shopMenu, name: '管理店铺' },
+    { authCode: 'system:brand:manage', parent: brandMenu, name: '管理品牌' },
+    { authCode: 'system:menu:manage', parent: menuMenu, name: '管理菜单' },
+  ];
+  const sysButtonMenus: Record<string, { id: string }> = {};
+  for (const [i, btn] of sysButtons.entries()) {
+    sysButtonMenus[btn.authCode] = await prisma.menu.create({
+      data: {
+        parentId: btn.parent.id,
+        type: MenuType.button,
+        name: btn.name,
+        authCode: btn.authCode,
+        meta: { title: btn.name },
+        sortOrder: i + 1,
+      },
+    });
+  }
+
   // 3. 分配角色权限
+  // Admin 拥有所有菜单和按钮
   const allMenuIds = [
     financeCatalog.id,
     dailyReportMenu.id,
@@ -170,9 +230,10 @@ async function main() {
     shopMenu.id,
     brandMenu.id,
     menuMenu.id,
+    ...Object.values(reportButtonMenus).map((m) => m.id),
+    summaryExportBtn.id,
+    ...Object.values(sysButtonMenus).map((m) => m.id),
   ];
-
-  // Admin 拥有所有权限
   await prisma.roleMenu.createMany({
     data: allMenuIds.map((menuId) => ({
       roleId: id(roles, 'admin'),
@@ -180,37 +241,65 @@ async function main() {
     })),
   });
 
-  // Boss 拥有资金管理的所有权限
+  // Boss 老板：看资金管理，锁定日报、导出汇总
+  const bossMenuIds = [
+    financeCatalog.id,
+    dailyReportMenu.id,
+    summaryMenu.id,
+    reportButtonMenus['report:lock']!.id,
+    reportButtonMenus['report:unlock']!.id,
+    summaryExportBtn.id,
+  ];
   await prisma.roleMenu.createMany({
-    data: [financeCatalog.id, dailyReportMenu.id, summaryMenu.id].map(
-      (menuId) => ({
-        roleId: id(roles, 'boss'),
-        menuId,
-      }),
-    ),
+    data: bossMenuIds.map((menuId) => ({
+      roleId: id(roles, 'boss'),
+      menuId,
+    })),
   });
 
-  // Finance 拥有资金管理的所有权限
+  // Finance 财务：录入/编辑日报、审核反审、导出汇总
+  const financeMenuIds = [
+    financeCatalog.id,
+    dailyReportMenu.id,
+    summaryMenu.id,
+    reportButtonMenus['report:create']!.id,
+    reportButtonMenus['report:edit']!.id,
+    reportButtonMenus['report:delete']!.id,
+    reportButtonMenus['report:audit']!.id,
+    reportButtonMenus['report:reject']!.id,
+    summaryExportBtn.id,
+  ];
   await prisma.roleMenu.createMany({
-    data: [financeCatalog.id, dailyReportMenu.id, summaryMenu.id].map(
-      (menuId) => ({
-        roleId: id(roles, 'finance'),
-        menuId,
-      }),
-    ),
+    data: financeMenuIds.map((menuId) => ({
+      roleId: id(roles, 'finance'),
+      menuId,
+    })),
   });
 
-  // Manager 拥有资金日报权限
+  // Manager 店长：录入/编辑/删除日报
+  const managerMenuIds = [
+    financeCatalog.id,
+    dailyReportMenu.id,
+    reportButtonMenus['report:create']!.id,
+    reportButtonMenus['report:edit']!.id,
+    reportButtonMenus['report:delete']!.id,
+  ];
   await prisma.roleMenu.createMany({
-    data: [financeCatalog.id, dailyReportMenu.id].map((menuId) => ({
+    data: managerMenuIds.map((menuId) => ({
       roleId: id(roles, 'manager'),
       menuId,
     })),
   });
 
-  // Staff 拥有资金日报权限
+  // Staff 员工：录入/编辑日报
+  const staffMenuIds = [
+    financeCatalog.id,
+    dailyReportMenu.id,
+    reportButtonMenus['report:create']!.id,
+    reportButtonMenus['report:edit']!.id,
+  ];
   await prisma.roleMenu.createMany({
-    data: [financeCatalog.id, dailyReportMenu.id].map((menuId) => ({
+    data: staffMenuIds.map((menuId) => ({
       roleId: id(roles, 'staff'),
       menuId,
     })),

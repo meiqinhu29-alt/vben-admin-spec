@@ -9,7 +9,7 @@ describe('usersService.verifyPasswordByUsername', () => {
 
   beforeEach(() => {
     prismaMock = { user: { findUnique: vi.fn() } };
-    service = new UsersService(prismaMock as any);
+    service = new UsersService(prismaMock as any, { resolveUserScope: vi.fn().mockResolvedValue({ scope: 'all', shopIds: [] }) } as any);
   });
 
   it('returns null when user not found', async () => {

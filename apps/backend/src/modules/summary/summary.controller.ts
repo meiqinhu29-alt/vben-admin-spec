@@ -1,7 +1,10 @@
 import type { Response } from 'express';
 
+import type { AuthUser } from '../../common/decorators/current-user.decorator';
+
 import { Controller, Get, Query, Res } from '@nestjs/common';
 
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { SummaryService } from './summary.service';
 
 @Controller('summary')
@@ -10,6 +13,7 @@ export class SummaryController {
 
   @Get('export')
   async export(
+    @CurrentUser() user: AuthUser,
     @Query('shopIds') shopIds?: string,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
@@ -23,6 +27,7 @@ export class SummaryController {
       dateTo: dateTo ? new Date(dateTo) : undefined,
       status,
       statuses: statuses ? statuses.split(',').filter(Boolean) : undefined,
+      userId: user.userId,
     });
 
     const ExcelJS = await import('exceljs');
@@ -101,6 +106,7 @@ export class SummaryController {
 
   @Get()
   async query(
+    @CurrentUser() user: AuthUser,
     @Query('shopIds') shopIds?: string,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
@@ -113,6 +119,7 @@ export class SummaryController {
       dateTo: dateTo ? new Date(dateTo) : undefined,
       status,
       statuses: statuses ? statuses.split(',').filter(Boolean) : undefined,
+      userId: user.userId,
     });
   }
 }

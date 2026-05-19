@@ -5,11 +5,15 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 
+import { DataScopeService } from '../../common/services/data-scope.service';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly dataScope: DataScopeService,
+  ) {}
 
   async assignRoles(userId: string, roleIds: string[]) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
@@ -83,6 +87,7 @@ export class UsersService {
     page?: number;
     pageSize?: number;
     status?: string;
+    userId?: string;
   }) {
     const page = Math.max(1, query.page ?? 1);
     const pageSize = Math.min(100, Math.max(1, query.pageSize ?? 20));
@@ -95,6 +100,20 @@ export class UsersService {
       ];
     }
     if (query.status) where.status = query.status;
+
+    // 数据范围过滤
+    if (query.userId) {
+      const scope = await this.dataScope.resolveUserScope(query.userId);
+      if (scope.scope === 'shop') {
+        if (scope.shopIds.length === 0) {
+          return { items: [], total: 0, page, pageSize };
+        }
+        // 仅显示与当前用户共享至少一个店铺的用户
+        where.shopAccess = { some: { shopId: { in: scope.shopIds } } };
+      } else if (scope.scope === 'self') {
+        where.id = query.userId;
+      }
+    }
 
     const [items, total] = await Promise.all([
       this.prisma.user.findMany({
