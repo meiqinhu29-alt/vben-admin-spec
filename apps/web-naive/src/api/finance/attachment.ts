@@ -23,10 +23,8 @@ export function uploadAttachmentApi(
   fieldName: string,
   file: File,
 ) {
-  const form = new FormData();
-  form.append('file', file);
-  return requestClient.post<ReportAttachment>(
+  return requestClient.upload<ReportAttachment>(
     `/attachments/${reportId}/${fieldName}`,
-    form,
+    { file },
   );
 }

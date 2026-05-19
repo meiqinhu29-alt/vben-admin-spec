@@ -123,9 +123,10 @@ const columns: DataTableColumns<SystemMenu> = [
     width: 200,
     render(row) {
       const icon = row.meta?.icon;
+      const displayName = row.meta?.title || row.name;
       return h('span', {}, [
         icon ? h('i', { class: icon, style: 'margin-right: 4px' }) : null,
-        row.name,
+        displayName,
       ]);
     },
   },
@@ -169,6 +170,7 @@ const columns: DataTableColumns<SystemMenu> = [
     title: '操作',
     key: 'actions',
     width: 220,
+    fixed: 'right',
     render(row) {
       return h(NSpace, { size: 'small' }, () => [
         row.type === 'catalog' || row.type === 'menu'

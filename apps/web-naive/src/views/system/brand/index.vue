@@ -119,6 +119,7 @@ const columns: DataTableColumns<Brand> = [
     title: '操作',
     key: 'actions',
     width: 160,
+    fixed: 'right',
     render(row) {
       return h(NSpace, { size: 'small' }, () => [
         h(

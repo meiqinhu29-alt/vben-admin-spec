@@ -4,8 +4,12 @@ import type { VbenFormSchema } from '#/adapter/form';
 import { computed } from 'vue';
 
 import { ProfilePasswordSetting, z } from '@vben/common-ui';
+import { useUserStore } from '@vben/stores';
 
 import { message } from '#/adapter/naive';
+import { changePasswordApi } from '#/api/system';
+
+const userStore = useUserStore();
 
 const formSchema = computed((): VbenFormSchema[] => {
   return [
@@ -50,8 +54,19 @@ const formSchema = computed((): VbenFormSchema[] => {
   ];
 });
 
-function handleSubmit() {
-  message.success('密码修改成功');
+async function handleSubmit(values: Record<string, any>) {
+  const userId = userStore.userInfo?.userId;
+  if (!userId) {
+    message.error('用户信息异常');
+    return;
+  }
+  try {
+    await changePasswordApi(userId, values.newPassword);
+    message.success('密码修改成功');
+  } catch (error: any) {
+    const msg = error?.response?.data?.message || '密码修改失败';
+    message.error(msg);
+  }
 }
 </script>
 <template>

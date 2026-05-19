@@ -27,21 +27,20 @@ import { UsersService } from './users.service';
 export class UsersController {
   constructor(private readonly users: UsersService) {}
 
-  @HttpCode(204)
   @Put('users/:id/roles')
   @Roles('admin')
   async assignRoles(@Param('id') id: string, @Body() dto: AssignRolesDto) {
     await this.users.assignRoles(id, dto.roleIds);
+    return { success: true };
   }
 
-  @HttpCode(204)
   @Put('users/:id/shops')
   @Roles('admin')
   async assignShops(@Param('id') id: string, @Body() dto: AssignShopsDto) {
     await this.users.assignShops(id, dto.shopIds);
+    return { success: true };
   }
 
-  @HttpCode(204)
   @Post('users/:id/password')
   @Roles('admin')
   async changePassword(
@@ -49,6 +48,7 @@ export class UsersController {
     @Body() dto: ChangePasswordDto,
   ) {
     await this.users.changePassword(id, dto.newPassword);
+    return { success: true };
   }
 
   @Post('users')

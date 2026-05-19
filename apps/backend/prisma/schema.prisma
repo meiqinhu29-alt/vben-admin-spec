@@ -17,6 +17,12 @@ enum RoleStatus {
   inactive
 }
 
+enum DataScope {
+  all
+  shop
+  self
+}
+
 enum MenuType {
   catalog
   menu
@@ -149,6 +155,7 @@ model Role {
   name        String     @db.VarChar(100)
   description String?    @db.VarChar(500)
   status      RoleStatus @default(active)
+  dataScope   DataScope  @default(all) @map("data_scope")
   isSystem    Boolean    @default(false) @map("is_system")
   createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz
   updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz

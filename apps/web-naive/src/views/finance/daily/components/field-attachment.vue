@@ -1,9 +1,11 @@
 <script lang="ts" setup>
+import type { UploadFileInfo } from 'naive-ui';
+
 import type { ReportAttachment } from '#/api/finance';
 
 import { onMounted, ref, watch } from 'vue';
 
-import { NButton, NImage, NSpace, useMessage } from 'naive-ui';
+import { NUpload, useMessage } from 'naive-ui';
 
 import {
   deleteAttachmentApi,
@@ -13,89 +15,125 @@ import {
 
 defineOptions({ name: 'FieldAttachment' });
 
-const props = defineProps<{
-  fieldName: string;
-  label: string;
-  reportId: string;
-}>();
+const props = withDefaults(
+  defineProps<{
+    fieldName: string;
+    label: string;
+    readonly?: boolean;
+    reportId: string;
+  }>(),
+  { readonly: false },
+);
 
 const message = useMessage();
-const attachments = ref<ReportAttachment[]>([]);
-const uploading = ref(false);
+const fileList = ref<UploadFileInfo[]>([]);
+
+// IDs uploaded during this form session — discardable on form cancel.
+const pendingIds = ref<Set<string>>(new Set());
+
+const isImage = (name: string) => /\.(jpg|jpeg|png|gif|webp)$/i.test(name);
+
+function toFileItem(att: ReportAttachment, pending = false): UploadFileInfo {
+  return {
+    id: att.id,
+    name: pending ? `🆕 ${att.fileName}` : att.fileName,
+    status: 'finished',
+    url: att.url,
+    thumbnailUrl: isImage(att.fileName) ? att.url : undefined,
+    type: isImage(att.fileName) ? 'image/*' : undefined,
+  } as UploadFileInfo;
+}
 
 async function load() {
   if (!props.reportId) return;
   const all = await listAttachmentsApi(props.reportId);
-  attachments.value = all.filter((a) => a.fieldName === props.fieldName);
+  fileList.value = all
+    .filter((a) => a.fieldName === props.fieldName)
+    .map((a) => toFileItem(a, pendingIds.value.has(a.id)));
 }
 
-async function handleDelete(id: string) {
-  await deleteAttachmentApi(id);
-  message.success('已删除');
-  await load();
-}
-
-async function handleFileChange(e: Event) {
-  const file = (e.target as HTMLInputElement).files?.[0];
-  if (!file) return;
-  uploading.value = true;
+async function customRequest({
+  file,
+  onFinish,
+  onError,
+}: {
+  file: UploadFileInfo;
+  onError: () => void;
+  onFinish: () => void;
+}) {
+  if (!file.file) {
+    onError();
+    return;
+  }
   try {
-    await uploadAttachmentApi(props.reportId, props.fieldName, file);
-    message.success('上传成功');
-    await load();
+    const att = await uploadAttachmentApi(
+      props.reportId,
+      props.fieldName,
+      file.file,
+    );
+    file.id = att.id;
+    file.url = att.url;
+    file.name = `🆕 ${att.fileName}`;
+    file.thumbnailUrl = isImage(att.fileName) ? att.url : undefined;
+    pendingIds.value.add(att.id);
+    onFinish();
+    message.success('已上传，待提交后正式保存');
   } catch {
-    message.error('上传失败');
-  } finally {
-    uploading.value = false;
-    (e.target as HTMLInputElement).value = '';
+    onError();
   }
 }
+
+async function handleRemove({ file }: { file: UploadFileInfo }) {
+  if (!file.id) return true;
+  try {
+    await deleteAttachmentApi(file.id);
+    pendingIds.value.delete(file.id);
+    message.success('已删除');
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function discardPending() {
+  if (pendingIds.value.size === 0) return;
+  const ids = [...pendingIds.value];
+  pendingIds.value.clear();
+  await Promise.allSettled(ids.map((id) => deleteAttachmentApi(id)));
+}
+
+function commitPending() {
+  pendingIds.value.clear();
+  fileList.value = fileList.value.map((f) => ({
+    ...f,
+    name: f.name?.replace(/^🆕\s/, '') ?? '',
+  }));
+}
+
+defineExpose({ discardPending, commitPending });
 
 watch(() => props.reportId, load);
 onMounted(load);
 </script>
 
 <template>
-  <NSpace :size="4" align="center">
-    <template v-for="att in attachments" :key="att.id">
-      <div style="position: relative; display: inline-block">
-        <NImage
-          v-if="/\.(jpg|jpeg|png|gif|webp)$/i.test(att.fileName)"
-          :src="att.url"
-          width="48"
-          height="48"
-          object-fit="cover"
-          style="display: block; border-radius: 4px"
-        />
-        <a v-else :href="att.url" target="_blank" style="font-size: 12px">{{
-          att.fileName
-        }}</a>
-        <NButton
-          size="tiny"
-          type="error"
-          circle
-          style="
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            min-width: 16px;
-            height: 16px;
-            font-size: 10px;
-          "
-          @click="handleDelete(att.id)"
-        >
-          ×
-        </NButton>
-      </div>
-    </template>
-    <label v-if="reportId" style="cursor: pointer">
-      <NButton size="small" :loading="uploading" tag="span">上传{{ label }}</NButton>
-      <input
-        type="file"
-        accept="image/*,.pdf"
-        style="display: none"
-        @change="handleFileChange"
-      />
-    </label>
-  </NSpace>
+  <NUpload
+    v-if="!readonly"
+    v-model:file-list="fileList"
+    list-type="image-card"
+    accept="image/*,.pdf"
+    :max="6"
+    :custom-request="customRequest"
+    :on-remove="handleRemove"
+  >
+    上传{{ label }}
+  </NUpload>
+  <NUpload
+    v-else
+    v-model:file-list="fileList"
+    list-type="image-card"
+    :show-trigger="false"
+    :show-remove-button="false"
+    disabled
+  />
 </template>

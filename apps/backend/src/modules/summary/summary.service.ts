@@ -7,6 +7,7 @@ interface SummaryQuery {
   dateFrom?: Date;
   dateTo?: Date;
   status?: string;
+  statuses?: string[];
 }
 
 const NUMERIC_FIELDS = [
@@ -39,7 +40,8 @@ export class SummaryService {
       if (params.dateFrom) where.reportDate.gte = params.dateFrom;
       if (params.dateTo) where.reportDate.lte = params.dateTo;
     }
-    if (params.status) where.status = params.status;
+    if (params.statuses?.length) where.status = { in: params.statuses };
+    else if (params.status) where.status = params.status;
 
     const rows = await this.prisma.dailyFundsReport.findMany({
       where,

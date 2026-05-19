@@ -43,7 +43,7 @@ const typeLabels: Record<string, string> = {
 function buildTreeData(menus: SystemMenu[]): any[] {
   return menus.map((menu) => ({
     key: menu.id,
-    label: menu.name,
+    label: menu.meta?.title || menu.name,
     suffix: () =>
       h(NSpace, { size: 4 }, () => [
         h(

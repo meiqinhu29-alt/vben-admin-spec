@@ -5,7 +5,7 @@ export interface SystemUser {
   username: string;
   displayName: string;
   status: 'active' | 'disabled';
-  roles: { id: string; code: string; name: string }[];
+  roles: { code: string; id: string; name: string }[];
   shopIds: string[];
   createdAt: string;
 }
@@ -26,7 +26,10 @@ export function createUserApi(data: Record<string, any>) {
 }
 
 export function updateUserApi(id: string, data: Record<string, any>) {
-  return requestClient.request<SystemUser>(`/users/${id}`, { method: 'PATCH', data });
+  return requestClient.request<SystemUser>(`/users/${id}`, {
+    method: 'PATCH',
+    data,
+  });
 }
 
 export function changePasswordApi(id: string, newPassword: string) {
@@ -38,9 +41,15 @@ export function deleteUserApi(id: string) {
 }
 
 export function assignUserRolesApi(id: string, roleIds: string[]) {
-  return requestClient.request(`/users/${id}/roles`, { method: 'PUT', data: { roleIds } });
+  return requestClient.request(`/users/${id}/roles`, {
+    method: 'PUT',
+    data: { roleIds },
+  });
 }
 
 export function assignUserShopsApi(id: string, shopIds: string[]) {
-  return requestClient.request(`/users/${id}/shops`, { method: 'PUT', data: { shopIds } });
+  return requestClient.request(`/users/${id}/shops`, {
+    method: 'PUT',
+    data: { shopIds },
+  });
 }

@@ -7,6 +7,7 @@ import {
   Get,
   HttpCode,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
   Query,
@@ -36,20 +37,29 @@ export class DailyReportsController {
     return this.reports.create(dto, user.userId);
   }
 
-  @Get('balance')
-  getBalance(@Query('shopId') shopId: string, @Query('date') date: string) {
-    return this.reports.getOpeningBalance(shopId, new Date(date));
+  @Get('opening-balance')
+  async getBalance(
+    @Query('shopId') shopId: string,
+    @Query('date') date: string,
+  ) {
+    const openingBalance = await this.reports.getOpeningBalance(
+      shopId,
+      new Date(date),
+    );
+    return { openingBalance };
   }
 
   @Get(':id')
-  getById(@Param('id') id: string) {
+  getById(@Param('id', new ParseUUIDPipe()) id: string) {
     return this.reports.getById(id);
   }
 
   @Get()
   list(
     @Query('shopId') shopId?: string,
+    @Query('shopIds') shopIds?: string,
     @Query('status') status?: string,
+    @Query('statuses') statuses?: string,
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
     @Query('page') page?: string,
@@ -57,7 +67,9 @@ export class DailyReportsController {
   ) {
     return this.reports.list({
       shopId,
-      status: status as any,
+      shopIds: shopIds ? shopIds.split(',').filter(Boolean) : undefined,
+      status,
+      statuses: statuses ? statuses.split(',').filter(Boolean) : undefined,
       dateFrom,
       dateTo,
       page: page ? Number(page) : undefined,

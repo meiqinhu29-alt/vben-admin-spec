@@ -459,9 +459,9 @@ describe('brandsService', () => {
 
   it('create throws ConflictException when code duplicated', async () => {
     prismaMock.brand.findUnique.mockResolvedValue({ id: 'existing' });
-    await expect(
-      service.create({ code: 'DUP', name: 'X' }),
-    ).rejects.toThrow(ConflictException);
+    await expect(service.create({ code: 'DUP', name: 'X' })).rejects.toThrow(
+      ConflictException,
+    );
   });
 
   it('create succeeds when code unique', async () => {
@@ -537,8 +537,12 @@ export class BrandsService {
       ...(query.keyword
         ? {
             OR: [
-              { code: { contains: query.keyword, mode: 'insensitive' as const } },
-              { name: { contains: query.keyword, mode: 'insensitive' as const } },
+              {
+                code: { contains: query.keyword, mode: 'insensitive' as const },
+              },
+              {
+                name: { contains: query.keyword, mode: 'insensitive' as const },
+              },
             ],
           }
         : {}),
@@ -971,6 +975,7 @@ Run: `cd apps/backend && pnpm test:integration test/integration/brands.e2e-spec.
 Expected: 8 个测试全过。
 
 如果失败：
+
 - 401/403 不对 → 检查 RolesGuard 是否注册（Task 4 Step 3）
 - "shop_bookkeeping_test" 不存在 → 重跑 prisma migrate（Task 1 Step 3）
 - prismaclient enum mismatch → `pnpm prisma:generate` 重新生成 client
@@ -1030,7 +1035,9 @@ export class CreateShopDto {
   brandId!: string;
 
   @IsOptional()
-  @Transform(({ value }) => (value === undefined || value === null ? undefined : String(value)))
+  @Transform(({ value }) =>
+    value === undefined || value === null ? undefined : String(value),
+  )
   @IsNumberString({ no_symbols: false })
   initialBalance?: string;
 
@@ -1091,7 +1098,9 @@ export class UpdateShopDto {
   brandId?: string;
 
   @IsOptional()
-  @Transform(({ value }) => (value === undefined || value === null ? undefined : String(value)))
+  @Transform(({ value }) =>
+    value === undefined || value === null ? undefined : String(value),
+  )
   @IsNumberString({ no_symbols: false })
   initialBalance?: string;
 
@@ -1257,8 +1266,12 @@ export class ShopsService {
       ...(query.keyword
         ? {
             OR: [
-              { code: { contains: query.keyword, mode: 'insensitive' as const } },
-              { name: { contains: query.keyword, mode: 'insensitive' as const } },
+              {
+                code: { contains: query.keyword, mode: 'insensitive' as const },
+              },
+              {
+                name: { contains: query.keyword, mode: 'insensitive' as const },
+              },
             ],
           }
         : {}),
@@ -1789,7 +1802,11 @@ git commit -m "feat(@vben/web-naive): add brand and shop API clients"
 
 ```vue
 <script lang="ts" setup>
-import type { Brand, CreateBrandRequest, UpdateBrandRequest } from '@vben/types';
+import type {
+  Brand,
+  CreateBrandRequest,
+  UpdateBrandRequest,
+} from '@vben/types';
 
 import { computed, ref, watch } from 'vue';
 
@@ -1848,7 +1865,11 @@ const rules = {
     message: '请输入品牌代码（字母数字_-）',
     pattern: /^[A-Za-z0-9_-]+$/,
   },
-  name: { required: true, trigger: ['blur', 'input'], message: '请输入品牌名称' },
+  name: {
+    required: true,
+    trigger: ['blur', 'input'],
+    message: '请输入品牌名称',
+  },
 };
 
 watch(
@@ -1905,7 +1926,13 @@ function handleClose() {
     :mask-closable="false"
     @update:show="handleClose"
   >
-    <NForm ref="formRef" :model="formModel" :rules="rules" label-placement="left" label-width="100">
+    <NForm
+      ref="formRef"
+      :model="formModel"
+      :rules="rules"
+      label-placement="left"
+      label-width="100"
+    >
       <NFormItem label="品牌代码" path="code">
         <NInput
           v-model:value="formModel.code"
@@ -1915,10 +1942,18 @@ function handleClose() {
         />
       </NFormItem>
       <NFormItem label="品牌名称" path="name">
-        <NInput v-model:value="formModel.name" placeholder="如 可可衣" maxlength="100" />
+        <NInput
+          v-model:value="formModel.name"
+          placeholder="如 可可衣"
+          maxlength="100"
+        />
       </NFormItem>
       <NFormItem label="LOGO 地址">
-        <NInput v-model:value="formModel.logoUrl" placeholder="可选" maxlength="500" />
+        <NInput
+          v-model:value="formModel.logoUrl"
+          placeholder="可选"
+          maxlength="500"
+        />
       </NFormItem>
       <NFormItem label="状态">
         <NSelect v-model:value="formModel.status" :options="statusOptions" />
@@ -1927,7 +1962,9 @@ function handleClose() {
     <template #footer>
       <div style="display: flex; justify-content: flex-end; gap: 8px">
         <NButton :disabled="submitting" @click="handleClose">取消</NButton>
-        <NButton type="primary" :loading="submitting" @click="handleSubmit">保存</NButton>
+        <NButton type="primary" :loading="submitting" @click="handleSubmit"
+          >保存</NButton
+        >
       </div>
     </template>
   </NModal>
@@ -1989,7 +2026,10 @@ const columns: DataTableColumns<Brand> = [
     render: (row) =>
       h(
         NTag,
-        { type: row.status === 'active' ? 'success' : 'default', size: 'small' },
+        {
+          type: row.status === 'active' ? 'success' : 'default',
+          size: 'small',
+        },
         { default: () => (row.status === 'active' ? '启用' : '停用') },
       ),
   },
@@ -2226,8 +2266,16 @@ const rules = {
     message: '请输入店铺代码（字母数字_-）',
     pattern: /^[A-Za-z0-9_-]+$/,
   },
-  name: { required: true, trigger: ['blur', 'input'], message: '请输入店铺名称' },
-  brandId: { required: true, trigger: ['blur', 'change'], message: '请选择品牌' },
+  name: {
+    required: true,
+    trigger: ['blur', 'input'],
+    message: '请输入店铺名称',
+  },
+  brandId: {
+    required: true,
+    trigger: ['blur', 'change'],
+    message: '请选择品牌',
+  },
 };
 
 async function loadBrands() {
@@ -2302,7 +2350,13 @@ onMounted(loadBrands);
     :mask-closable="false"
     @update:show="handleClose"
   >
-    <NForm ref="formRef" :model="formModel" :rules="rules" label-placement="left" label-width="100">
+    <NForm
+      ref="formRef"
+      :model="formModel"
+      :rules="rules"
+      label-placement="left"
+      label-width="100"
+    >
       <NFormItem label="店铺代码" path="code">
         <NInput
           v-model:value="formModel.code"
@@ -2312,7 +2366,11 @@ onMounted(loadBrands);
         />
       </NFormItem>
       <NFormItem label="店铺名称" path="name">
-        <NInput v-model:value="formModel.name" placeholder="如 林达步行街店" maxlength="100" />
+        <NInput
+          v-model:value="formModel.name"
+          placeholder="如 林达步行街店"
+          maxlength="100"
+        />
       </NFormItem>
       <NFormItem label="所属品牌" path="brandId">
         <NSelect
@@ -2346,7 +2404,9 @@ onMounted(loadBrands);
     <template #footer>
       <div style="display: flex; justify-content: flex-end; gap: 8px">
         <NButton :disabled="submitting" @click="handleClose">取消</NButton>
-        <NButton type="primary" :loading="submitting" @click="handleSubmit">保存</NButton>
+        <NButton type="primary" :loading="submitting" @click="handleSubmit"
+          >保存</NButton
+        >
       </div>
     </template>
   </NModal>
@@ -2426,7 +2486,10 @@ const columns: DataTableColumns<Shop> = [
     render: (row) =>
       h(
         NTag,
-        { type: row.status === 'active' ? 'success' : 'default', size: 'small' },
+        {
+          type: row.status === 'active' ? 'success' : 'default',
+          size: 'small',
+        },
         { default: () => (row.status === 'active' ? '启用' : '停用') },
       ),
   },
@@ -2715,6 +2778,7 @@ pnpm dev:naive
 - [ ] **Step 3: 浏览器测试 — 创建品牌**
 
 打开 http://localhost:5888，admin/admin123 登录，进入"品牌管理"，点击"新建品牌"：
+
 - 代码：KKY
 - 名称：可可衣
 
@@ -2723,6 +2787,7 @@ pnpm dev:naive
 - [ ] **Step 4: 浏览器测试 — 创建店铺**
 
 进入"店铺管理"，点击"新建店铺"：
+
 - 代码：SH-001
 - 名称：林达步行街店
 - 所属品牌：可可衣（KKY）

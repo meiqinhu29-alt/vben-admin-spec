@@ -138,6 +138,7 @@ const columns: DataTableColumns<SystemRole> = [
     title: '操作',
     key: 'actions',
     width: 240,
+    fixed: 'right',
     render(row) {
       return h(NSpace, { size: 'small' }, () => [
         h(

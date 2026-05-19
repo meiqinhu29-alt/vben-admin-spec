@@ -36,9 +36,13 @@ export class RolesService {
   }
 
   async getById(id: string) {
-    const role = await this.prisma.role.findUnique({ where: { id } });
+    const role = await this.prisma.role.findUnique({
+      where: { id },
+      include: { roleMenus: { select: { menuId: true } } },
+    });
     if (!role) throw new NotFoundException('Role not found');
-    return role;
+    const { roleMenus, ...rest } = role;
+    return { ...rest, menuIds: roleMenus.map((rm) => rm.menuId) };
   }
 
   async list(query: {

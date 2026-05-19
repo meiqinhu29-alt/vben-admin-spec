@@ -14,6 +14,7 @@ export class SummaryController {
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
     @Query('status') status?: string,
+    @Query('statuses') statuses?: string,
     @Res() res?: Response,
   ) {
     const { rows, totals } = await this.summary.query({
@@ -21,6 +22,7 @@ export class SummaryController {
       dateFrom: dateFrom ? new Date(dateFrom) : undefined,
       dateTo: dateTo ? new Date(dateTo) : undefined,
       status,
+      statuses: statuses ? statuses.split(',').filter(Boolean) : undefined,
     });
 
     const ExcelJS = await import('exceljs');
@@ -103,12 +105,14 @@ export class SummaryController {
     @Query('dateFrom') dateFrom?: string,
     @Query('dateTo') dateTo?: string,
     @Query('status') status?: string,
+    @Query('statuses') statuses?: string,
   ) {
     return this.summary.query({
       shopIds: shopIds ? shopIds.split(',') : undefined,
       dateFrom: dateFrom ? new Date(dateFrom) : undefined,
       dateTo: dateTo ? new Date(dateTo) : undefined,
       status,
+      statuses: statuses ? statuses.split(',').filter(Boolean) : undefined,
     });
   }
 }

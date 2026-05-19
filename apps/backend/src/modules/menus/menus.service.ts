@@ -98,6 +98,67 @@ export class MenusService {
     return this.prisma.menu.update({ where: { id }, data: dto });
   }
 
+  async getUserMenuTree(roles: string[]) {
+    const menuIds = await this.prisma.roleMenu.findMany({
+      where: {
+        role: { code: { in: roles } },
+      },
+      select: { menuId: true },
+    });
+
+    const ids = [...new Set(menuIds.map((m) => m.menuId))];
+    if (ids.length === 0) return [];
+
+    const menus = await this.prisma.menu.findMany({
+      where: { id: { in: ids }, status: 'active' },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+    });
+
+    return this.buildRouteTree(menus, null);
+  }
+
+  private buildRouteTree(menus: any[], parentId: null | string): any[] {
+    return menus
+      .filter((m) => m.parentId === parentId)
+      .map((m) => {
+        const children = this.buildRouteTree(menus, m.id);
+        const meta = (m.meta as Record<string, any>) ?? {};
+        const route: any = {
+          name: m.name,
+          path: m.path ?? '',
+          meta: {
+            title: meta.title || m.name,
+            icon: meta.icon,
+            order: meta.order,
+            hideInMenu: m.type === 'button',
+          },
+        };
+        if (m.component) {
+          route.component = m.component;
+        }
+        if (children.length > 0) {
+          route.children = children;
+          if (m.type === 'catalog') {
+            const firstChild = children.find((c: any) => !c.meta?.hideInMenu);
+            if (firstChild) {
+              route.redirect = firstChild.path;
+            }
+          }
+        }
+        return route;
+      })
+      .filter((route) => {
+        // 过滤掉没有可见子菜单的 catalog
+        if (route.component === 'BasicLayout') {
+          const visibleChildren = (route.children ?? []).filter(
+            (c: any) => !c.meta?.hideInMenu,
+          );
+          return visibleChildren.length > 0;
+        }
+        return true;
+      });
+  }
+
   private buildTree(menus: any[], parentId: null | string): any[] {
     return menus
       .filter((m) => m.parentId === parentId)

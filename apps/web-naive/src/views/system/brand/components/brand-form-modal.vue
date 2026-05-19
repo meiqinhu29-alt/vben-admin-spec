@@ -94,8 +94,12 @@ async function handleSubmit() {
       message.success('创建成功');
     }
     emit('saved');
-  } catch {
-    message.error(isEdit.value ? '更新失败' : '创建失败');
+  } catch (error: any) {
+    const msg =
+      error?.response?.data?.message ||
+      error?.message ||
+      (isEdit.value ? '更新失败' : '创建失败');
+    message.error(msg);
   } finally {
     submitting.value = false;
   }

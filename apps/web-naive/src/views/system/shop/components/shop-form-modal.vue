@@ -20,7 +20,7 @@ import { createShopApi, listBrandsApi, updateShopApi } from '#/api/system';
 defineOptions({ name: 'ShopFormModal' });
 
 const props = defineProps<{
-  shop: Shop | null;
+  shop: null | Shop;
   show: boolean;
 }>();
 
@@ -112,7 +112,7 @@ async function handleSubmit() {
     const payload = {
       name: formModel.name,
       brandId: formModel.brandId,
-      initialBalance: formModel.initialBalance,
+      initialBalance: String(formModel.initialBalance ?? 0),
       address: formModel.address || undefined,
       contactName: formModel.contactName || undefined,
       contactPhone: formModel.contactPhone || undefined,

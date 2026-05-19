@@ -44,7 +44,9 @@ const formModel = reactive({
 
 const rules = computed(() => ({
   username: { required: true, message: '请输入用户名', trigger: 'blur' },
-  password: isEdit.value ? {} : { required: true, message: '请输入密码', trigger: 'blur' },
+  password: isEdit.value
+    ? {}
+    : { required: true, message: '请输入密码', trigger: 'blur' },
   displayName: { required: true, message: '请输入显示名称', trigger: 'blur' },
 }));
 
@@ -136,7 +138,10 @@ function handleClose() {
         />
       </NFormItem>
       <NFormItem label="显示名称" path="displayName">
-        <NInput v-model:value="formModel.displayName" placeholder="请输入显示名称" />
+        <NInput
+          v-model:value="formModel.displayName"
+          placeholder="请输入显示名称"
+        />
       </NFormItem>
       <NFormItem label="状态" path="status">
         <NSelect v-model:value="formModel.status" :options="statusOptions" />
@@ -145,7 +150,9 @@ function handleClose() {
     <template #footer>
       <NSpace justify="end">
         <NButton @click="handleClose">取消</NButton>
-        <NButton type="primary" :loading="submitting" @click="handleSubmit">确定</NButton>
+        <NButton type="primary" :loading="submitting" @click="handleSubmit">
+          确定
+        </NButton>
       </NSpace>
     </template>
   </NModal>

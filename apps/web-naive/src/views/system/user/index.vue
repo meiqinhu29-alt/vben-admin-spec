@@ -139,7 +139,10 @@ const columns: DataTableColumns<SystemUser> = [
     render(row) {
       return h(
         NTag,
-        { type: row.status === 'active' ? 'success' : 'warning', size: 'small' },
+        {
+          type: row.status === 'active' ? 'success' : 'warning',
+          size: 'small',
+        },
         () => (row.status === 'active' ? '启用' : '停用'),
       );
     },
@@ -148,17 +151,43 @@ const columns: DataTableColumns<SystemUser> = [
     title: '操作',
     key: 'actions',
     width: 320,
+    fixed: 'right',
     render(row) {
       return h(NSpace, { size: 'small' }, () => [
-        h(NButton, { size: 'small', onClick: () => handleEdit(row) }, () => '编辑'),
-        h(NButton, { size: 'small', type: 'primary', onClick: () => handleAssignRoles(row) }, () => '分配角色'),
-        h(NButton, { size: 'small', type: 'primary', onClick: () => handleAssignShops(row) }, () => '分配店铺'),
-        h(NButton, { size: 'small', onClick: () => handleChangePassword(row) }, () => '修改密码'),
+        h(
+          NButton,
+          { size: 'small', onClick: () => handleEdit(row) },
+          () => '编辑',
+        ),
+        h(
+          NButton,
+          {
+            size: 'small',
+            type: 'primary',
+            onClick: () => handleAssignRoles(row),
+          },
+          () => '分配角色',
+        ),
+        h(
+          NButton,
+          {
+            size: 'small',
+            type: 'primary',
+            onClick: () => handleAssignShops(row),
+          },
+          () => '分配店铺',
+        ),
+        h(
+          NButton,
+          { size: 'small', onClick: () => handleChangePassword(row) },
+          () => '修改密码',
+        ),
         h(
           NPopconfirm,
           { onPositiveClick: () => handleDelete(row) },
           {
-            trigger: () => h(NButton, { size: 'small', type: 'error' }, () => '删除'),
+            trigger: () =>
+              h(NButton, { size: 'small', type: 'error' }, () => '删除'),
             default: () => '确认删除该用户？',
           },
         ),

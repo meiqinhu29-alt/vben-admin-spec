@@ -5,16 +5,20 @@ import type { DailyReport } from '#/api/finance';
 
 import { computed, h, onMounted, reactive, ref } from 'vue';
 
-import { useUserStore } from '@vben/stores';
 import { Page } from '@vben/common-ui';
+import { useUserStore } from '@vben/stores';
 
 import {
   NButton,
+  NCard,
   NDataTable,
   NDatePicker,
+  NGi,
+  NGrid,
   NPopconfirm,
   NSelect,
   NSpace,
+  NStatistic,
   NTag,
   useMessage,
 } from 'naive-ui';
@@ -29,6 +33,7 @@ import {
 } from '#/api/finance';
 import { listShopsApi } from '#/api/system';
 
+import ReportDetailModal from './components/report-detail-modal.vue';
 import ReportFormModal from './components/report-form-modal.vue';
 
 defineOptions({ name: 'DailyReportList' });
@@ -48,15 +53,16 @@ const data = ref<DailyReport[]>([]);
 const pagination = reactive({ page: 1, pageSize: 20, itemCount: 0 });
 
 const shopOptions = ref<{ label: string; value: string }[]>([]);
-const filterShopId = ref<null | string>(null);
-const filterStatus = ref<null | string>(null);
+const filterShopIds = ref<string[]>([]);
+const filterStatuses = ref<string[]>([]);
 const filterDateRange = ref<[number, number] | null>(null);
 
 const showFormModal = ref(false);
 const editingReport = ref<DailyReport | null>(null);
+const showDetailModal = ref(false);
+const detailReport = ref<DailyReport | null>(null);
 
 const statusOptions = [
-  { label: '全部', value: '' },
   { label: '未审', value: 'pending' },
   { label: '已审', value: 'audited' },
   { label: '锁定', value: 'locked' },
@@ -95,8 +101,10 @@ async function fetchData() {
       page: pagination.page,
       pageSize: pagination.pageSize,
     };
-    if (filterShopId.value) params.shopId = filterShopId.value;
-    if (filterStatus.value) params.status = filterStatus.value;
+    if (filterShopIds.value.length > 0)
+      params.shopIds = filterShopIds.value.join(',');
+    if (filterStatuses.value.length > 0)
+      params.statuses = filterStatuses.value.join(',');
     if (filterDateRange.value) {
       params.dateFrom = new Date(filterDateRange.value[0])
         .toISOString()
@@ -183,6 +191,11 @@ function handleSaved() {
   fetchData();
 }
 
+function handleRowClick(row: DailyReport) {
+  detailReport.value = row;
+  showDetailModal.value = true;
+}
+
 function numCol(title: string, key: keyof DailyReport, width = 100) {
   return {
     title,
@@ -200,7 +213,12 @@ const columns: DataTableColumns<DailyReport> = [
     width: 120,
     render: (row) => shopMap.value[row.shopId] ?? row.shopId,
   },
-  { title: '日期', key: 'reportDate', width: 110 },
+  {
+    title: '日期',
+    key: 'reportDate',
+    width: 110,
+    render: (row) => row.reportDate?.slice(0, 10),
+  },
   numCol('期初余额', 'openingBalance'),
   numCol('营业额', 'revenue'),
   numCol('卡扣', 'cardFee', 80),
@@ -232,6 +250,7 @@ const columns: DataTableColumns<DailyReport> = [
     title: '操作',
     key: 'actions',
     width: 200,
+    fixed: 'right',
     render(row) {
       const btns: any[] = [];
       if (row.status === 'pending') {
@@ -326,17 +345,22 @@ onMounted(async () => {
     <NSpace vertical :size="16">
       <NSpace>
         <NSelect
-          v-model:value="filterShopId"
+          v-model:value="filterShopIds"
           :options="shopOptions"
+          multiple
           clearable
-          placeholder="选择店铺"
-          style="width: 160px"
+          placeholder="店铺（可多选）"
+          style="width: 220px"
+          :max-tag-count="1"
         />
         <NSelect
-          v-model:value="filterStatus"
+          v-model:value="filterStatuses"
           :options="statusOptions"
-          placeholder="状态筛选"
-          style="width: 120px"
+          multiple
+          clearable
+          placeholder="状态（可多选）"
+          style="width: 200px"
+          :max-tag-count="2"
         />
         <NDatePicker
           v-model:value="filterDateRange"
@@ -347,6 +371,38 @@ onMounted(async () => {
         <NButton type="primary" @click="handleSearch">查询</NButton>
       </NSpace>
 
+      <NCard size="small" title="本页合计" style="margin-bottom: 12px">
+        <NGrid :cols="5" :x-gap="16" :y-gap="8">
+          <NGi>
+            <NStatistic label="营业额" :value="totals.revenue?.toFixed(2)" />
+          </NGi>
+          <NGi>
+            <NStatistic
+              label="实际业绩"
+              :value="totals.actualRevenue?.toFixed(2)"
+            />
+          </NGi>
+          <NGi>
+            <NStatistic
+              label="刷给公司"
+              :value="totals.transferToCompany?.toFixed(2)"
+            />
+          </NGi>
+          <NGi>
+            <NStatistic
+              label="店铺费用"
+              :value="totals.shopExpense?.toFixed(2)"
+            />
+          </NGi>
+          <NGi>
+            <NStatistic
+              label="期末余额"
+              :value="totals.closingBalance?.toFixed(2)"
+            />
+          </NGi>
+        </NGrid>
+      </NCard>
+
       <NDataTable
         :columns="columns"
         :data="data"
@@ -355,20 +411,29 @@ onMounted(async () => {
           page: pagination.page,
           pageSize: pagination.pageSize,
           itemCount: pagination.itemCount,
+          showSizePicker: true,
+          pageSizes: [10, 20, 50, 100],
+          showQuickJumper: true,
           onUpdatePage: (p: number) => {
             pagination.page = p;
             fetchData();
           },
+          onUpdatePageSize: (s: number) => {
+            pagination.pageSize = s;
+            pagination.page = 1;
+            fetchData();
+          },
         }"
         :row-key="(row: DailyReport) => row.id"
-        :summary="
-          () => {
-            const row: Record<string, any> = {};
-            for (const k of numericKeys) {
-              row[k] = { value: totals[k]?.toFixed(2) ?? '' };
-            }
-            return row;
-          }
+        :row-props="
+          (row: DailyReport) => ({
+            style: 'cursor: pointer',
+            onClick: (e: MouseEvent) => {
+              if ((e.target as HTMLElement).closest('button, .n-popconfirm'))
+                return;
+              handleRowClick(row);
+            },
+          })
         "
         scroll-x="1600"
         size="small"
@@ -380,5 +445,17 @@ onMounted(async () => {
       :report="editingReport"
       @saved="handleSaved"
     />
+
+    <ReportDetailModal
+      v-model:show="showDetailModal"
+      :report="detailReport"
+      :shop-name="detailReport ? (shopMap[detailReport.shopId] ?? '') : ''"
+    />
   </Page>
 </template>
+
+<style scoped>
+.daily-table :deep(.n-data-table) {
+  font-size: 13px;
+}
+</style>

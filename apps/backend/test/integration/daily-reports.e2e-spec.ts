@@ -5,11 +5,7 @@ import request from 'supertest';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { PrismaService } from '../../src/prisma/prisma.service';
-import {
-  createTestApp,
-  createTestRole,
-  truncateAll,
-} from './test-helpers';
+import { createTestApp, createTestRole, truncateAll } from './test-helpers';
 
 describe('daily-reports (e2e)', () => {
   let app: INestApplication;
@@ -147,11 +143,13 @@ describe('daily-reports (e2e)', () => {
       });
 
     const balanceRes = await request(app.getHttpServer())
-      .get(`/api/daily-reports/balance?shopId=${shopId}&date=2024-01-11`)
+      .get(
+        `/api/daily-reports/opening-balance?shopId=${shopId}&date=2024-01-11`,
+      )
       .set('Authorization', `Bearer ${staffToken}`);
     expect(balanceRes.status).toBe(200);
     // closingBalance of first report becomes opening balance of next
-    expect(typeof balanceRes.body.data).toBe('string');
+    expect(balanceRes.body.data.openingBalance).toBeDefined();
   });
 
   it('cannot create duplicate (same shop + date) — 409', async () => {

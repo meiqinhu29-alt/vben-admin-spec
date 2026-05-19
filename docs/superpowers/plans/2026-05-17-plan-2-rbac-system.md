@@ -461,7 +461,9 @@ export class PermissionsService {
         meta: m.meta,
         children: this.buildTree(menus, m.id),
       }))
-      .map((m) => (m.children.length === 0 ? { ...m, children: undefined } : m));
+      .map((m) =>
+        m.children.length === 0 ? { ...m, children: undefined } : m,
+      );
   }
 }
 ```
@@ -500,7 +502,7 @@ git commit -m "feat(@vben/backend): add PermissionsService with multi-role union
 由于 Plan #2 内容量大（13 个 Task，每个 5-8 步），完整内容已超出单次输出限制。剩余 Task 概要：
 
 | Task | 内容 | 关键点 |
-|------|------|--------|
+| --- | --- | --- |
 | 3 | RolesService + RolesController | CRUD + 系统角色不可删 |
 | 4 | MenusService + MenusController | 树形 CRUD + type 校验 |
 | 5 | 重构 Auth 模块 | JwtStrategy 改多角色、menu.service 改 DB 查询、删 config 文件 |

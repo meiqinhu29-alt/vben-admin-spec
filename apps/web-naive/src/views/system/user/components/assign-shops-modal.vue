@@ -30,7 +30,9 @@ const emit = defineEmits<{
 const message = useMessage();
 const loading = ref(false);
 const submitting = ref(false);
-const allShops = ref<{ id: string; name: string; brand?: { name: string } }[]>([]);
+const allShops = ref<{ brand?: { name: string }; id: string; name: string }[]>(
+  [],
+);
 const selectedShopIds = ref<string[]>([]);
 
 async function loadShops() {
@@ -48,7 +50,7 @@ watch(
   (val) => {
     if (val) {
       selectedShopIds.value = [...props.user.shopIds];
-      if (!allShops.value.length) loadShops();
+      if (allShops.value.length === 0) loadShops();
     }
   },
 );
@@ -90,7 +92,9 @@ function handleClose() {
             v-for="shop in allShops"
             :key="shop.id"
             :value="shop.id"
-            :label="shop.brand ? `${shop.brand.name} - ${shop.name}` : shop.name"
+            :label="
+              shop.brand ? `${shop.brand.name} - ${shop.name}` : shop.name
+            "
           />
         </NSpace>
       </NCheckboxGroup>
@@ -98,7 +102,9 @@ function handleClose() {
     <template #footer>
       <NSpace justify="end">
         <NButton @click="handleClose">取消</NButton>
-        <NButton type="primary" :loading="submitting" @click="handleSubmit">确定</NButton>
+        <NButton type="primary" :loading="submitting" @click="handleSubmit">
+          确定
+        </NButton>
       </NSpace>
     </template>
   </NModal>

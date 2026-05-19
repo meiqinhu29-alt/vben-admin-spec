@@ -13,7 +13,9 @@ import { UpdateDailyReportDto } from './dto/update-daily-report.dto';
 
 interface ListQuery {
   shopId?: string;
+  shopIds?: string[];
   status?: string;
+  statuses?: string[];
   dateFrom?: string;
   dateTo?: string;
   page?: number;
@@ -149,10 +151,21 @@ export class DailyReportsService {
   }
 
   async list(query: ListQuery) {
-    const { shopId, status, dateFrom, dateTo, page = 1, pageSize = 20 } = query;
+    const {
+      shopId,
+      shopIds,
+      status,
+      statuses,
+      dateFrom,
+      dateTo,
+      page = 1,
+      pageSize = 20,
+    } = query;
     const where: any = {};
-    if (shopId) where.shopId = shopId;
-    if (status) where.status = status;
+    if (shopIds?.length) where.shopId = { in: shopIds };
+    else if (shopId) where.shopId = shopId;
+    if (statuses?.length) where.status = { in: statuses };
+    else if (status) where.status = status;
     if (dateFrom || dateTo) {
       where.reportDate = {};
       if (dateFrom) where.reportDate.gte = new Date(dateFrom);

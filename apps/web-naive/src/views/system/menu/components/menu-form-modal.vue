@@ -83,13 +83,13 @@ const rules = computed(() => {
 });
 
 const showPath = computed(() =>
-  ['catalog', 'menu', 'link', 'embedded'].includes(formModel.type),
+  ['catalog', 'embedded', 'link', 'menu'].includes(formModel.type),
 );
 const showComponent = computed(() =>
   ['catalog', 'menu'].includes(formModel.type),
 );
 const showAuthCode = computed(() =>
-  ['menu', 'button'].includes(formModel.type),
+  ['button', 'menu'].includes(formModel.type),
 );
 const showMetaIcon = computed(() =>
   ['catalog', 'menu'].includes(formModel.type),
@@ -155,11 +155,10 @@ async function handleSubmit() {
   if (showMetaOrder.value) payload.meta.order = formModel.metaOrder;
 
   // Set parentId
-  if (isEdit.value && props.menu) {
-    payload.parentId = props.menu.parentId;
-  } else {
-    payload.parentId = props.parent?.id ?? null;
-  }
+  payload.parentId =
+    isEdit.value && props.menu
+      ? props.menu.parentId
+      : (props.parent?.id ?? null);
 
   try {
     if (isEdit.value && props.menu) {

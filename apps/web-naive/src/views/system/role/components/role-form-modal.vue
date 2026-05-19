@@ -146,8 +146,8 @@ function handleClose() {
       <NSpace justify="end">
         <NButton @click="handleClose">取消</NButton>
         <NButton type="primary" :loading="submitting" @click="handleSubmit">
-确定
-</NButton>
+          确定
+        </NButton>
       </NSpace>
     </template>
   </NModal>

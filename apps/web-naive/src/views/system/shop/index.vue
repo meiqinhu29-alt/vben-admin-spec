@@ -38,7 +38,7 @@ const searchBrandId = ref<null | string>(null);
 const searchStatus = ref<null | string>(null);
 
 const showFormModal = ref(false);
-const editingShop = ref<Shop | null>(null);
+const editingShop = ref<null | Shop>(null);
 
 const brandOptions = ref<Array<{ label: string; value: string }>>([]);
 
@@ -145,6 +145,7 @@ const columns: DataTableColumns<Shop> = [
     title: '操作',
     key: 'actions',
     width: 160,
+    fixed: 'right',
     render(row) {
       return h(NSpace, { size: 'small' }, () => [
         h(

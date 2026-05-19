@@ -48,7 +48,7 @@ watch(
   (val) => {
     if (val) {
       selectedRoleIds.value = props.user.roles.map((r) => r.id);
-      if (!allRoles.value.length) loadRoles();
+      if (allRoles.value.length === 0) loadRoles();
     }
   },
 );
@@ -98,7 +98,9 @@ function handleClose() {
     <template #footer>
       <NSpace justify="end">
         <NButton @click="handleClose">取消</NButton>
-        <NButton type="primary" :loading="submitting" @click="handleSubmit">确定</NButton>
+        <NButton type="primary" :loading="submitting" @click="handleSubmit">
+          确定
+        </NButton>
       </NSpace>
     </template>
   </NModal>
