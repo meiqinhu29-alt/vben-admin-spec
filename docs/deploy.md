@@ -48,19 +48,19 @@ cd vben-admin-spec
 ### 3. 配置环境变量
 
 ```bash
-cp .env.production .env.production.local
-vi .env.production.local
+cp .env.production.example .env.production
+vi .env.production
 ```
 
 必须修改的字段：
 
-| 变量 | 说明 | 示例 |
-|------|------|------|
-| `POSTGRES_PASSWORD` | 数据库密码 | `MyStr0ngP@ss!` |
-| `JWT_ACCESS_SECRET` | JWT 签名密钥 | `openssl rand -hex 32` 生成 |
-| `JWT_REFRESH_SECRET` | JWT 刷新密钥 | `openssl rand -hex 32` 生成 |
-| `MINIO_ROOT_PASSWORD` | MinIO 密码 | 至少 8 位 |
-| `CORS_ORIGIN` | 前端访问地址 | `http://你的ECS公网IP` |
+| 变量                  | 说明         | 示例                        |
+| --------------------- | ------------ | --------------------------- |
+| `POSTGRES_PASSWORD`   | 数据库密码   | `MyStr0ngP@ss!`             |
+| `JWT_ACCESS_SECRET`   | JWT 签名密钥 | `openssl rand -hex 32` 生成 |
+| `JWT_REFRESH_SECRET`  | JWT 刷新密钥 | `openssl rand -hex 32` 生成 |
+| `MINIO_ROOT_PASSWORD` | MinIO 密码   | 至少 8 位                   |
+| `CORS_ORIGIN`         | 前端访问地址 | `http://你的ECS公网IP`      |
 
 快速生成密钥：
 
@@ -89,6 +89,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.production \
 ```
 
 Seed 会创建：
+
 - 5 个角色：admin（全部数据）、boss（店铺数据）、finance（店铺数据）、manager（店铺数据）、staff（仅自己）
 - 完整菜单权限树（资金管理 + 系统管理 + 按钮级 authCode）
 - 5 个默认账号，密码统一 `admin123`
@@ -165,13 +166,13 @@ docker compose -f docker-compose.prod.yml down -v
 
 ## 默认账号
 
-| 用户名 | 密码 | 角色 | 数据范围 |
-|--------|------|------|----------|
-| admin | admin123 | 系统管理员 | 全部数据 |
-| boss | admin123 | 老板 | 所属店铺 |
-| finance | admin123 | 财务 | 所属店铺 |
-| manager | admin123 | 店长 | 所属店铺 |
-| staff | admin123 | 员工 | 仅自己创建 |
+| 用户名  | 密码     | 角色       | 数据范围   |
+| ------- | -------- | ---------- | ---------- |
+| admin   | admin123 | 系统管理员 | 全部数据   |
+| boss    | admin123 | 老板       | 所属店铺   |
+| finance | admin123 | 财务       | 所属店铺   |
+| manager | admin123 | 店长       | 所属店铺   |
+| staff   | admin123 | 员工       | 仅自己创建 |
 
 > 部署后请立即修改 admin 密码。
 
