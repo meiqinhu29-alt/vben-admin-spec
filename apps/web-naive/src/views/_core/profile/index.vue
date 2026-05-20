@@ -13,7 +13,7 @@ const tabsValue = ref<string>('basic');
 
 const tabs = ref([
   {
-    label: '基本设置',
+    label: '基本信息',
     value: 'basic',
   },
   {

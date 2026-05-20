@@ -12,4 +12,7 @@ export const overridesPreferences = defineOverridesPreferences({
     defaultHomePath: '/home',
     name: import.meta.env.VITE_APP_TITLE,
   },
+  copyright: {
+    companyName: '日报系统',
+  },
 });

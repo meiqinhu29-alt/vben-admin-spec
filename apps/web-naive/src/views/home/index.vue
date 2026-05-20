@@ -25,6 +25,7 @@ import { useUserStore } from '@vben/stores';
 import { NAvatar, NEmpty, NTag } from 'naive-ui';
 
 import { listDailyReportsApi } from '#/api/finance';
+import { USER_ROLE_LABELS } from '#/utils/role';
 
 defineOptions({ name: 'Home' });
 
@@ -53,15 +54,9 @@ const today = computed(() => {
   return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 星期${weekDay}`;
 });
 
-const roleLabels: Record<string, string> = {
-  admin: '系统管理员',
-  boss: '老板',
-  finance: '财务',
-  manager: '店长',
-  staff: '员工',
-};
-
-const roleTags = computed(() => userRoles.value.map((r) => roleLabels[r] ?? r));
+const roleTags = computed(() =>
+  userRoles.value.map((r) => USER_ROLE_LABELS[r] ?? r),
+);
 
 const stats = ref({
   total: 0,

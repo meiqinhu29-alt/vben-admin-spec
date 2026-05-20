@@ -1,65 +1,80 @@
 <script setup lang="ts">
-import type { BasicOption } from '@vben/types';
+import type { AppUserInfo } from '#/api/core/user';
 
-import type { VbenFormSchema } from '#/adapter/form';
+import { computed } from 'vue';
 
-import { computed, onMounted, ref } from 'vue';
+import { useUserStore } from '@vben/stores';
 
-import { ProfileBaseSetting } from '@vben/common-ui';
+import { NDescriptions, NDescriptionsItem, NTag } from 'naive-ui';
 
-import { getUserInfoApi } from '#/api';
+import { USER_ROLE_LABELS } from '#/utils/role';
 
-const profileBaseSettingRef = ref();
-
-const MOCK_ROLES_OPTIONS: BasicOption[] = [
-  {
-    label: '管理员',
-    value: 'super',
-  },
-  {
-    label: '用户',
-    value: 'user',
-  },
-  {
-    label: '测试',
-    value: 'test',
-  },
-];
-
-const formSchema = computed((): VbenFormSchema[] => {
-  return [
-    {
-      fieldName: 'realName',
-      component: 'Input',
-      label: '姓名',
-    },
-    {
-      fieldName: 'username',
-      component: 'Input',
-      label: '用户名',
-    },
-    {
-      fieldName: 'roles',
-      component: 'Select',
-      componentProps: {
-        mode: 'tags',
-        options: MOCK_ROLES_OPTIONS,
-      },
-      label: '角色',
-    },
-    {
-      fieldName: 'introduction',
-      component: 'Textarea',
-      label: '个人简介',
-    },
-  ];
-});
-
-onMounted(async () => {
-  const data = await getUserInfoApi();
-  profileBaseSettingRef.value.getFormApi().setValues(data);
-});
+const userStore = useUserStore();
+const userInfo = computed(
+  () => userStore.userInfo as AppUserInfo | null,
+);
+const shopIds = computed<string[]>(() => userInfo.value?.shopIds ?? []);
+const roles = computed<string[]>(() => userInfo.value?.roles ?? []);
 </script>
+
 <template>
-  <ProfileBaseSetting ref="profileBaseSettingRef" :form-schema="formSchema" />
+  <div class="profile-base">
+    <h3 class="profile-base__title">基本信息</h3>
+    <NDescriptions
+      v-if="userInfo"
+      bordered
+      label-placement="left"
+      :column="1"
+    >
+      <NDescriptionsItem label="用户名">
+        {{ userInfo.username }}
+      </NDescriptionsItem>
+      <NDescriptionsItem label="姓名">
+        {{ userInfo.realName ?? '-' }}
+      </NDescriptionsItem>
+      <NDescriptionsItem label="角色">
+        <template v-if="roles.length">
+          <NTag
+            v-for="r in roles"
+            :key="r"
+            class="profile-base__role-tag"
+            :bordered="false"
+            type="primary"
+            size="small"
+          >
+            {{ USER_ROLE_LABELS[r] ?? r }}
+          </NTag>
+        </template>
+        <span v-else>-</span>
+      </NDescriptionsItem>
+      <NDescriptionsItem label="所属店铺数">
+        {{ shopIds.length }}
+      </NDescriptionsItem>
+      <NDescriptionsItem label="账号 ID">
+        <span class="profile-base__user-id">{{ userInfo.userId }}</span>
+      </NDescriptionsItem>
+    </NDescriptions>
+  </div>
 </template>
+
+<style scoped>
+.profile-base {
+  max-width: 720px;
+}
+
+.profile-base__title {
+  margin: 0 0 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: hsl(var(--foreground));
+}
+
+.profile-base__role-tag {
+  margin-right: 6px;
+}
+
+.profile-base__user-id {
+  font-size: 12px;
+  color: hsl(var(--muted-foreground));
+}
+</style>
