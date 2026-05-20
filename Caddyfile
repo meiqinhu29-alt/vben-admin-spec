@@ -1,0 +1,9 @@
+# Caddyfile — 生产环境反向代理
+#
+# 无域名阶段：用 :80 监听，纯 HTTP
+# 有域名后：把 :80 改成 yourdomain.com，Caddy 自动申请 HTTPS 证书
+#   例如: example.com {
+#
+:80 {
+	reverse_proxy frontend:80
+}
