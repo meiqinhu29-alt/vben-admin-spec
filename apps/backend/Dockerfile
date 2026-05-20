@@ -1,6 +1,9 @@
 FROM node:22-alpine AS builder
 WORKDIR /app
 
+# CI=true 让 prepare 脚本里的 is-ci 短路成功，跳过 lefthook git hook 安装
+ENV CI=true
+
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # 配置国内 npm 镜像
