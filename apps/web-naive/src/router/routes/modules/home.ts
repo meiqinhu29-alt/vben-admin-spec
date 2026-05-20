@@ -1,0 +1,25 @@
+import type { RouteRecordRaw } from 'vue-router';
+
+const routes: RouteRecordRaw[] = [
+  {
+    meta: {
+      icon: 'lucide:home',
+      order: -1,
+      title: '首页',
+    },
+    name: 'Home',
+    path: '/home',
+    component: () => import('#/views/home/index.vue'),
+  },
+  {
+    meta: {
+      hideInMenu: true,
+      title: '个人中心',
+    },
+    name: 'Profile',
+    path: '/profile',
+    component: () => import('#/views/_core/profile/index.vue'),
+  },
+];
+
+export default routes;

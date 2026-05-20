@@ -8,6 +8,11 @@ import { defineOverridesPreferences } from '@vben/preferences';
 export const overridesPreferences = defineOverridesPreferences({
   // overrides
   app: {
+    accessMode: 'mixed',
+    defaultHomePath: '/home',
     name: import.meta.env.VITE_APP_TITLE,
+  },
+  copyright: {
+    companyName: '日报系统',
   },
 });

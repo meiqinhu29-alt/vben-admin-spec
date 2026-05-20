@@ -2,7 +2,7 @@ import type { Preferences } from './types';
 
 const defaultPreferences: Preferences = {
   app: {
-    accessMode: 'frontend',
+    accessMode: 'mixed',
     authPageLayout: 'panel-right',
     checkUpdatesInterval: 1,
     colorGrayMode: false,
@@ -17,7 +17,7 @@ const defaultPreferences: Preferences = {
     contentPaddingTop: 0,
     defaultAvatar:
       'https://unpkg.com/@vbenjs/static-source@0.1.7/source/avatar-v1.webp',
-    defaultHomePath: '/analytics',
+    defaultHomePath: '/home',
     dynamicTitle: true,
     enableCheckUpdates: true,
     enableCopyPreferences: true,
@@ -42,13 +42,13 @@ const defaultPreferences: Preferences = {
     styleType: 'normal',
   },
   copyright: {
-    companyName: 'Vben',
-    companySiteLink: 'https://www.vben.pro',
-    date: '2024',
-    enable: true,
+    companyName: '',
+    companySiteLink: '',
+    date: '',
+    enable: false,
     icp: '',
     icpLink: '',
-    settingShow: true,
+    settingShow: false,
   },
   footer: {
     enable: false,
@@ -134,13 +134,13 @@ const defaultPreferences: Preferences = {
   widget: {
     fullscreen: true,
     globalSearch: true,
-    languageToggle: true,
+    languageToggle: false,
     lockScreen: true,
     notification: true,
     refresh: true,
     sidebarToggle: true,
     themeToggle: true,
-    timezone: true,
+    timezone: false,
   },
 };
 

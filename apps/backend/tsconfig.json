@@ -1,0 +1,26 @@
+{
+  "extends": "@vben/tsconfig/library.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Bundler",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "strictPropertyInitialization": false,
+    "verbatimModuleSyntax": false,
+    "isolatedModules": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noUncheckedIndexedAccess": false,
+    "ignoreDeprecations": "6.0",
+    "noEmit": false,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "paths": {
+      "#/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*", "test/**/*", "prisma/seed.ts"],
+  "exclude": ["node_modules", "dist"]
+}
