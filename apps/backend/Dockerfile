@@ -14,7 +14,7 @@ COPY apps/backend ./apps/backend
 COPY packages/types ./packages/types
 COPY internal/tsconfig ./internal/tsconfig
 
-RUN pnpm install --frozen-lockfile --filter @vben/backend... --filter @vben/types
+RUN pnpm install --frozen-lockfile --filter @vben/backend... --filter @vben/types --ignore-scripts && pnpm rebuild
 
 WORKDIR /app/apps/backend
 RUN pnpm prisma generate
