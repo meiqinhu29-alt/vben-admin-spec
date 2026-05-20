@@ -5,6 +5,10 @@ RUN corepack enable && corepack prepare pnpm@latest --activate
 
 COPY . .
 
+# 配置国内 npm 镜像 + 移除有问题的 postinstall
+RUN echo "registry=https://registry.npmmirror.com" > .npmrc \
+    && sed -i '/"postinstall"/d' package.json
+
 RUN pnpm install --frozen-lockfile
 RUN pnpm build:naive
 

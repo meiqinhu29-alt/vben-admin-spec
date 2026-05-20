@@ -3,18 +3,24 @@ WORKDIR /app
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
+# 配置国内 npm 镜像
+RUN echo "registry=https://registry.npmmirror.com" > .npmrc
+
 # 复制 monorepo 元数据先
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/backend/package.json ./apps/backend/
 COPY packages/types/package.json ./packages/types/
 COPY internal/tsconfig/package.json ./internal/tsconfig/
 
+# 移除根 postinstall（stub 脚本在 Docker 构建中不需要）
+RUN sed -i '/"postinstall"/d' package.json
+
 # 复制源码并安装依赖
 COPY apps/backend ./apps/backend
 COPY packages/types ./packages/types
 COPY internal/tsconfig ./internal/tsconfig
 
-RUN pnpm install --frozen-lockfile --filter @vben/backend... --filter @vben/types --ignore-scripts && pnpm rebuild
+RUN pnpm install --frozen-lockfile --filter @vben/backend... --filter @vben/types
 
 WORKDIR /app/apps/backend
 RUN pnpm prisma generate
