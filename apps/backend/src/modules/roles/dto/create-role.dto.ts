@@ -9,6 +9,7 @@ import {
 } from 'class-validator';
 
 const ROLE_STATUSES = ['active', 'inactive'] as const;
+const DATA_SCOPES = ['all', 'shop', 'self'] as const;
 
 export class CreateRoleDto {
   @IsNotEmpty()
@@ -19,6 +20,10 @@ export class CreateRoleDto {
   @MaxLength(50)
   @MinLength(2)
   code!: string;
+
+  @IsEnum(DATA_SCOPES)
+  @IsOptional()
+  dataScope?: 'all' | 'self' | 'shop';
 
   @IsOptional()
   @IsString()

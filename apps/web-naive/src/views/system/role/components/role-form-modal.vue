@@ -40,6 +40,7 @@ const formModel = reactive({
   name: '',
   description: '',
   status: 'active' as string,
+  dataScope: 'all' as string,
 });
 
 const rules = {
@@ -52,6 +53,12 @@ const statusOptions = [
   { label: '停用', value: 'inactive' },
 ];
 
+const dataScopeOptions = [
+  { label: '全部数据', value: 'all' },
+  { label: '所属店铺', value: 'shop' },
+  { label: '仅自己创建', value: 'self' },
+];
+
 watch(
   () => props.show,
   (val) => {
@@ -60,11 +67,13 @@ watch(
       formModel.name = props.role.name;
       formModel.description = props.role.description ?? '';
       formModel.status = props.role.status;
+      formModel.dataScope = (props.role as any).dataScope ?? 'all';
     } else if (val) {
       formModel.code = '';
       formModel.name = '';
       formModel.description = '';
       formModel.status = 'active';
+      formModel.dataScope = 'all';
     }
   },
 );
@@ -82,6 +91,7 @@ async function handleSubmit() {
         name: formModel.name,
         description: formModel.description,
         status: formModel.status,
+        dataScope: formModel.dataScope,
       });
       message.success('更新成功');
     } else {
@@ -90,6 +100,7 @@ async function handleSubmit() {
         name: formModel.name,
         description: formModel.description,
         status: formModel.status,
+        dataScope: formModel.dataScope,
       });
       message.success('创建成功');
     }
@@ -140,6 +151,12 @@ function handleClose() {
       </NFormItem>
       <NFormItem label="状态" path="status">
         <NSelect v-model:value="formModel.status" :options="statusOptions" />
+      </NFormItem>
+      <NFormItem label="数据范围" path="dataScope">
+        <NSelect
+          v-model:value="formModel.dataScope"
+          :options="dataScopeOptions"
+        />
       </NFormItem>
     </NForm>
     <template #footer>

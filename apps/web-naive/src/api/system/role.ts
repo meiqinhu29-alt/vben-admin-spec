@@ -5,6 +5,7 @@ export interface SystemRole {
   code: string;
   name: string;
   description?: string;
+  dataScope: 'all' | 'self' | 'shop';
   status: 'active' | 'inactive';
   isSystem: boolean;
   createdAt: string;
@@ -27,6 +28,7 @@ export function getRoleApi(id: string) {
 
 export function createRoleApi(data: {
   code: string;
+  dataScope?: string;
   description?: string;
   name: string;
   status?: string;
