@@ -100,8 +100,8 @@ export class DailyReportsController {
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(@Param('id') id: string) {
-    await this.reports.remove(id);
+  async remove(@Param('id') id: string, @CurrentUser() user: AuthUser) {
+    await this.reports.remove(id, user.userId);
   }
 
   @HttpCode(200)

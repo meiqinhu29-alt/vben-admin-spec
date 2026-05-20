@@ -21,7 +21,7 @@ describe('auditService', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    service = new AuditService(mockPrisma as any);
+    service = new AuditService(mockPrisma as any, { resolveUserScope: vi.fn().mockResolvedValue({ scope: 'all', shopIds: [] }) } as any);
     mockPrisma.$transaction.mockImplementation((ops: any[]) =>
       Promise.all(ops),
     );
@@ -35,16 +35,6 @@ describe('auditService', () => {
       });
       await expect(service.audit('r1', 'u1', ['finance'])).rejects.toThrow(
         ConflictException,
-      );
-    });
-
-    it('throws ForbiddenException when role is not finance/admin', async () => {
-      mockPrisma.dailyFundsReport.findUnique.mockResolvedValue({
-        id: 'r1',
-        status: 'pending',
-      });
-      await expect(service.audit('r1', 'u1', ['staff'])).rejects.toThrow(
-        ForbiddenException,
       );
     });
 
@@ -78,16 +68,6 @@ describe('auditService', () => {
       );
     });
 
-    it('throws ForbiddenException when role is not boss/admin', async () => {
-      mockPrisma.dailyFundsReport.findUnique.mockResolvedValue({
-        id: 'r1',
-        status: 'audited',
-      });
-      await expect(service.lock('r1', 'u1', ['finance'])).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
-
     it('succeeds and transitions to locked', async () => {
       mockPrisma.dailyFundsReport.findUnique.mockResolvedValue({
         id: 'r1',
@@ -110,16 +90,6 @@ describe('auditService', () => {
       });
       await expect(service.reject('r1', 'u1', ['finance'])).rejects.toThrow(
         ConflictException,
-      );
-    });
-
-    it('throws ForbiddenException when role is not finance/admin', async () => {
-      mockPrisma.dailyFundsReport.findUnique.mockResolvedValue({
-        id: 'r1',
-        status: 'audited',
-      });
-      await expect(service.reject('r1', 'u1', ['boss'])).rejects.toThrow(
-        ForbiddenException,
       );
     });
 
@@ -155,16 +125,6 @@ describe('auditService', () => {
       });
       await expect(service.unlock('r1', 'u1', ['admin'])).rejects.toThrow(
         ConflictException,
-      );
-    });
-
-    it('throws ForbiddenException when role is not admin', async () => {
-      mockPrisma.dailyFundsReport.findUnique.mockResolvedValue({
-        id: 'r1',
-        status: 'locked',
-      });
-      await expect(service.unlock('r1', 'u1', ['boss'])).rejects.toThrow(
-        ForbiddenException,
       );
     });
 

@@ -214,7 +214,7 @@ describe('dailyReportsService', () => {
   describe('remove', () => {
     it('throws NotFoundException when report does not exist', async () => {
       mockPrisma.dailyFundsReport.findUnique.mockResolvedValue(null);
-      await expect(service.remove('r1')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('r1', 'u1')).rejects.toThrow(NotFoundException);
     });
 
     it('throws BadRequestException when status is not pending', async () => {
@@ -222,7 +222,7 @@ describe('dailyReportsService', () => {
         id: 'r1',
         status: 'locked',
       });
-      await expect(service.remove('r1')).rejects.toThrow(BadRequestException);
+      await expect(service.remove('r1', 'u1')).rejects.toThrow(BadRequestException);
     });
   });
 });

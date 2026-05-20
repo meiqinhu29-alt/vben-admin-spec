@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -31,6 +32,20 @@ export class DailyReportsService {
     private readonly calculator: BalanceCalculatorService,
     private readonly dataScope: DataScopeService,
   ) {}
+
+  private async checkWriteAccess(
+    report: { createdBy: string; shopId: string },
+    userId: string,
+  ) {
+    const scope = await this.dataScope.resolveUserScope(userId);
+    if (scope.scope === 'all') return;
+    if (scope.scope === 'shop' && !scope.shopIds.includes(report.shopId)) {
+      throw new ForbiddenException('无权操作该店铺的日报');
+    }
+    if (scope.scope === 'self' && report.createdBy !== userId) {
+      throw new ForbiddenException('只能操作自己创建的日报');
+    }
+  }
 
   async cascadeRecalculate(shopId: string, fromDate: Date, _userId: string) {
     const reports = await this.prisma.dailyFundsReport.findMany({
@@ -228,7 +243,7 @@ export class DailyReportsService {
     return { total, items, page, pageSize };
   }
 
-  async remove(id: string) {
+  async remove(id: string, userId: string) {
     const existing = await this.prisma.dailyFundsReport.findUnique({
       where: { id },
     });
@@ -236,6 +251,7 @@ export class DailyReportsService {
     if (existing.status !== 'pending') {
       throw new BadRequestException('Only pending reports can be deleted');
     }
+    await this.checkWriteAccess(existing, userId);
     return this.prisma.dailyFundsReport.delete({ where: { id } });
   }
 
@@ -249,6 +265,7 @@ export class DailyReportsService {
         `Cannot edit report with status '${existing.status}'`,
       );
     }
+    await this.checkWriteAccess(existing, userId);
 
     const openingBalance =
       dto.openingBalance ?? existing.openingBalance.toString();
