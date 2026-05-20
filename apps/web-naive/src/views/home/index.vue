@@ -7,12 +7,12 @@ import type {
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 
+import { useAccess } from '@vben/access';
 import {
   AnalysisChartCard,
   AnalysisOverview,
   WorkbenchQuickNav,
 } from '@vben/common-ui';
-import { useAccess } from '@vben/access';
 import {
   SvgBellIcon,
   SvgCakeIcon,
@@ -172,7 +172,7 @@ const quickNavItems = computed<WorkbenchQuickNavItem[]>(() => {
 
 const statusMap: Record<
   string,
-  { label: string; type: 'info' | 'success' | 'warning'; }
+  { label: string; type: 'info' | 'success' | 'warning' }
 > = {
   pending: { type: 'warning', label: '未审' },
   audited: { type: 'info', label: '已审' },

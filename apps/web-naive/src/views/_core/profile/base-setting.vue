@@ -10,9 +10,7 @@ import { NDescriptions, NDescriptionsItem, NTag } from 'naive-ui';
 import { USER_ROLE_LABELS } from '#/utils/role';
 
 const userStore = useUserStore();
-const userInfo = computed(
-  () => userStore.userInfo as AppUserInfo | null,
-);
+const userInfo = computed(() => userStore.userInfo as AppUserInfo | null);
 const shopIds = computed<string[]>(() => userInfo.value?.shopIds ?? []);
 const roles = computed<string[]>(() => userInfo.value?.roles ?? []);
 </script>
@@ -20,12 +18,7 @@ const roles = computed<string[]>(() => userInfo.value?.roles ?? []);
 <template>
   <div class="profile-base">
     <h3 class="profile-base__title">基本信息</h3>
-    <NDescriptions
-      v-if="userInfo"
-      bordered
-      label-placement="left"
-      :column="1"
-    >
+    <NDescriptions v-if="userInfo" bordered label-placement="left" :column="1">
       <NDescriptionsItem label="用户名">
         {{ userInfo.username }}
       </NDescriptionsItem>
@@ -33,7 +26,7 @@ const roles = computed<string[]>(() => userInfo.value?.roles ?? []);
         {{ userInfo.realName ?? '-' }}
       </NDescriptionsItem>
       <NDescriptionsItem label="角色">
-        <template v-if="roles.length">
+        <template v-if="roles.length > 0">
           <NTag
             v-for="r in roles"
             :key="r"
