@@ -18,7 +18,9 @@ RUN echo "registry=https://registry.npmmirror.com" > .npmrc \
     && sed -i '/"postinstall"/d' package.json
 
 RUN pnpm install --frozen-lockfile
-RUN pnpm build:naive
+# 直接调 vite，绕开 turbo 拓扑分析（@vben/tsconfig 和 @vben/types 的循环依赖会让 turbo 拒绝执行）
+WORKDIR /app/apps/web-naive
+RUN pnpm vite build --mode production
 
 FROM nginx:1.27-alpine AS runtime
 COPY --from=builder /app/apps/web-naive/dist /usr/share/nginx/html
