@@ -1,32 +1,52 @@
 # 部署指南
 
-## 环境要求
+## 部署方案
 
-- 阿里云 ECS（Ubuntu 22.04+，建议 2GB+ 内存）
-- 安全组开放端口：22（SSH）、80（HTTP）、443（HTTPS，有域名后）
-- Docker + Docker Compose
+**本地构建镜像 → 推送到阿里云 ACR → ECS 拉取镜像运行**
+
+优势：构建放在本地（无网络/编译环境问题），ECS 只负责拉镜像和运行，部署快且稳。
 
 ## 架构
 
 ```
-ECS
-├── Caddy (:80/:443)     ← 反向代理，有域名后自动 HTTPS
-├── Frontend (Nginx)     ← Vue SPA + /api/ 反代到 backend
-├── Backend (NestJS)     ← REST API :3100
-├── PostgreSQL           ← 数据库
-└── MinIO                ← 附件/凭证存储
+本地 Mac (ARM)                阿里云 ACR              阿里云 ECS (北京)
+│                              │                       │
+└─ docker buildx ──push────►   ├─ vben-admin-backend   │
+                               └─ vben-admin-frontend  └─ docker compose pull + up
+                                                          ├── Caddy (:80)
+                                                          ├── Frontend
+                                                          ├── Backend
+                                                          ├── PostgreSQL
+                                                          └── MinIO
 ```
 
-## 首次部署
+## 前置准备
 
-### 1. 安装 Docker
+### 1. 阿里云 ACR 个人版
+
+1. 打开 [阿里云 ACR 控制台](https://cr.console.aliyun.com)
+2. 创建**个人版实例**（免费），区域选 **华北2（北京）** — 与 ECS 同地域
+3. 创建命名空间，例如 `xiaose`（这就是镜像前缀）
+4. 设置访问凭证：「访问凭证」→ 设置固定密码（用于 docker login）
+5. 创建两个镜像仓库：`vben-admin-backend`、`vben-admin-frontend`
+
+镜像地址（个人版格式）：
+
+- 公网（本地推送）：`crpi-<实例ID>.cn-beijing.personal.cr.aliyuncs.com/<namespace>/...`
+- 内网（ECS 拉取，免费）：`crpi-<实例ID>-vpc.cn-beijing.personal.cr.aliyuncs.com/<namespace>/...`
+
+> 个人版每个用户有独立的 `crpi-<id>` 子域名，从 ACR 控制台「实例信息」复制。VPC 内网地址在「访问凭证」页面查看，如果没显示说明该地域暂未开通内网访问，用公网地址也行（会走公网带宽）。
+
+### 2. ECS 安装 Docker
 
 ```bash
-# 一键安装
 curl -fsSL https://get.docker.com | bash
 systemctl enable docker && systemctl start docker
+```
 
-# 配置镜像加速（阿里云控制台 → 容器镜像服务 → 镜像加速器 获取专属地址）
+阿里云 Docker 镜像配置：
+
+```bash
 mkdir -p /etc/docker
 cat > /etc/docker/daemon.json <<'EOF'
 {
@@ -38,77 +58,68 @@ EOF
 systemctl daemon-reload && systemctl restart docker
 ```
 
-### 2. 获取代码
+## 首次部署
+
+### 在本地（Mac）：构建并推送镜像
 
 ```bash
+# 1. 编辑 build-and-push.sh，把 IMAGE_NAMESPACE 改成你的 ACR 命名空间
+# 或通过环境变量：
+IMAGE_NAMESPACE=xiaose bash scripts/deploy/build-and-push.sh
+```
+
+脚本会：
+
+- 自动创建 buildx builder
+- 跨平台编译 linux/amd64 镜像（Mac M 系列必须）
+- 登录 ACR（首次需输入用户名/密码）
+- 推送 backend + frontend 镜像
+
+首次构建 5-10 分钟。
+
+### 在 ECS 上：拉取并启动
+
+```bash
+# 1. 拉代码（仅为获取 docker-compose.prod.yml + Caddyfile + 脚本）
 git clone https://github.com/meiqinhu29-alt/vben-admin-spec.git
 cd vben-admin-spec
-```
 
-### 3. 配置环境变量
-
-```bash
+# 2. 配置环境变量
 cp .env.production.example .env.production
 vi .env.production
-```
+# 修改 IMAGE_NAMESPACE 为你的 ACR 命名空间
 
-必须修改的字段：
+# 3. 拉取镜像并启动
+bash scripts/deploy/pull-and-up.sh
 
-| 变量                  | 说明         | 示例                        |
-| --------------------- | ------------ | --------------------------- |
-| `POSTGRES_PASSWORD`   | 数据库密码   | `MyStr0ngP@ss!`             |
-| `JWT_ACCESS_SECRET`   | JWT 签名密钥 | `openssl rand -hex 32` 生成 |
-| `JWT_REFRESH_SECRET`  | JWT 刷新密钥 | `openssl rand -hex 32` 生成 |
-| `MINIO_ROOT_PASSWORD` | MinIO 密码   | 至少 8 位                   |
-| `CORS_ORIGIN`         | 前端访问地址 | `http://你的ECS公网IP`      |
-
-快速生成密钥：
-
-```bash
-echo "JWT_ACCESS_SECRET=$(openssl rand -hex 32)"
-echo "JWT_REFRESH_SECRET=$(openssl rand -hex 32)"
-```
-
-### 4. 构建并启动
-
-```bash
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
-```
-
-首次构建约 5-10 分钟（取决于网速和机器配置）。
-
-### 5. 初始化数据库
-
-```bash
-# 等待所有容器 healthy
-docker compose -f docker-compose.prod.yml ps
-
-# 执行 seed（创建角色、菜单、权限、默认用户）
+# 4. 首次部署初始化数据库
 docker compose -f docker-compose.prod.yml --env-file .env.production \
   exec backend pnpm prisma db seed
 ```
 
-Seed 会创建：
+Seed 创建：
 
-- 5 个角色：admin（全部数据）、boss（店铺数据）、finance（店铺数据）、manager（店铺数据）、staff（仅自己）
-- 完整菜单权限树（资金管理 + 系统管理 + 按钮级 authCode）
+- 5 个角色：admin / boss / finance / manager / staff
+- 完整菜单权限树 + authCode 按钮权限
 - 5 个默认账号，密码统一 `admin123`
 
-### 6. 验证
+### 验证
 
-浏览器访问 `http://你的ECS公网IP`，使用 `admin / admin123` 登录。
+浏览器访问 `http://101.200.219.28`，使用 `admin / admin123` 登录。
 
 ## 后续更新
 
 ```bash
+# 本地：重新构建并推送（代码改动后）
+IMAGE_NAMESPACE=xiaose bash scripts/deploy/build-and-push.sh
+
+# ECS：拉新镜像并重启
 cd vben-admin-spec
 git pull
-
-# 重新构建并启动（数据库数据不会丢失）
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+bash scripts/deploy/pull-and-up.sh
 ```
 
-> 注意：`prisma migrate deploy` 已写在 backend 容器启动命令中，每次启动自动执行迁移。无需手动操作。
+> Prisma migrate deploy 已写在 backend 容器启动命令中，自动执行迁移。
 
 ## 添加域名（HTTPS）
 
@@ -123,44 +134,26 @@ docker compose -f docker-compose.prod.yml --env-file .env.production up -d --bui
 ```
 
 3. 修改 `.env.production` 中 `CORS_ORIGIN=https://yourdomain.com`
-4. 重启：
+4. 重启：`docker compose -f docker-compose.prod.yml --env-file .env.production up -d`
 
-```bash
-docker compose -f docker-compose.prod.yml --env-file .env.production up -d
-```
-
-Caddy 会自动申请 Let's Encrypt 证书并续期，无需额外配置。
+Caddy 自动申请 Let's Encrypt 证书并续期。
 
 ## 常用运维命令
 
 ```bash
-# 查看所有容器状态
-docker compose -f docker-compose.prod.yml ps
+docker compose -f docker-compose.prod.yml ps                                    # 状态
+docker compose -f docker-compose.prod.yml logs -f backend                       # 日志
+docker compose -f docker-compose.prod.yml restart backend                       # 重启
+docker compose -f docker-compose.prod.yml exec postgres psql -U vben shop_bookkeeping  # DB
 
-# 查看后端日志
-docker compose -f docker-compose.prod.yml logs -f backend
-
-# 查看所有日志
-docker compose -f docker-compose.prod.yml logs -f
-
-# 重启单个服务
-docker compose -f docker-compose.prod.yml restart backend
-
-# 进入数据库
-docker compose -f docker-compose.prod.yml exec postgres psql -U vben shop_bookkeeping
-
-# 数据库备份
+# 备份数据库
 docker compose -f docker-compose.prod.yml exec postgres \
   pg_dump -U vben shop_bookkeeping > backup_$(date +%Y%m%d).sql
 
-# 数据库恢复
-cat backup_20260520.sql | docker compose -f docker-compose.prod.yml exec -T postgres \
-  psql -U vben shop_bookkeeping
-
-# 完全停止并删除容器（数据卷保留）
+# 完全停止（数据卷保留）
 docker compose -f docker-compose.prod.yml down
 
-# 完全清除（包括数据卷，慎用！）
+# 完全清除（包括数据卷，慎用）
 docker compose -f docker-compose.prod.yml down -v
 ```
 
@@ -178,7 +171,7 @@ docker compose -f docker-compose.prod.yml down -v
 
 ## 注意事项
 
-- **不要重复执行 seed**：seed 脚本会清空所有数据再重建，仅首次部署时执行一次
-- **备份**：建议配置定时备份（crontab + pg_dump），至少每天一次
-- **内存**：全套服务约占 1-1.5GB 内存，建议 ECS 至少 2GB
-- **磁盘**：Docker 镜像 + 数据库 + MinIO 附件，建议 40GB+ 系统盘
+- **不要重复执行 seed**：seed 会清空所有数据再重建，仅首次部署执行一次
+- **备份**：建议配置定时备份（crontab + pg_dump）
+- **内存**：全套服务约占 1-1.5GB，建议 ECS 至少 2GB
+- **磁盘**：建议 40GB+ 系统盘
