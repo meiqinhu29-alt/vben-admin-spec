@@ -30,9 +30,12 @@
 4. 设置访问凭证：「访问凭证」→ 设置固定密码（用于 docker login）
 5. 创建两个镜像仓库：`vben-admin-backend`、`vben-admin-frontend`
 
-镜像地址：
-- 公网（本地推送）：`registry.cn-beijing.aliyuncs.com/<namespace>/...`
-- 内网（ECS 拉取，免费）：`registry-vpc.cn-beijing.aliyuncs.com/<namespace>/...`
+镜像地址（个人版格式）：
+
+- 公网（本地推送）：`crpi-<实例ID>.cn-beijing.personal.cr.aliyuncs.com/<namespace>/...`
+- 内网（ECS 拉取，免费）：`crpi-<实例ID>-vpc.cn-beijing.personal.cr.aliyuncs.com/<namespace>/...`
+
+> 个人版每个用户有独立的 `crpi-<id>` 子域名，从 ACR 控制台「实例信息」复制。VPC 内网地址在「访问凭证」页面查看，如果没显示说明该地域暂未开通内网访问，用公网地址也行（会走公网带宽）。
 
 ### 2. ECS 安装 Docker
 
@@ -66,6 +69,7 @@ IMAGE_NAMESPACE=xiaose bash scripts/deploy/build-and-push.sh
 ```
 
 脚本会：
+
 - 自动创建 buildx builder
 - 跨平台编译 linux/amd64 镜像（Mac M 系列必须）
 - 登录 ACR（首次需输入用户名/密码）
@@ -94,6 +98,7 @@ docker compose -f docker-compose.prod.yml --env-file .env.production \
 ```
 
 Seed 创建：
+
 - 5 个角色：admin / boss / finance / manager / staff
 - 完整菜单权限树 + authCode 按钮权限
 - 5 个默认账号，密码统一 `admin123`
@@ -154,13 +159,13 @@ docker compose -f docker-compose.prod.yml down -v
 
 ## 默认账号
 
-| 用户名 | 密码 | 角色 | 数据范围 |
-|--------|------|------|----------|
-| admin | admin123 | 系统管理员 | 全部数据 |
-| boss | admin123 | 老板 | 所属店铺 |
-| finance | admin123 | 财务 | 所属店铺 |
-| manager | admin123 | 店长 | 所属店铺 |
-| staff | admin123 | 员工 | 仅自己创建 |
+| 用户名  | 密码     | 角色       | 数据范围   |
+| ------- | -------- | ---------- | ---------- |
+| admin   | admin123 | 系统管理员 | 全部数据   |
+| boss    | admin123 | 老板       | 所属店铺   |
+| finance | admin123 | 财务       | 所属店铺   |
+| manager | admin123 | 店长       | 所属店铺   |
+| staff   | admin123 | 员工       | 仅自己创建 |
 
 > 部署后请立即修改 admin 密码。
 

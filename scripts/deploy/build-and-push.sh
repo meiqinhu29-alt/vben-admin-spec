@@ -7,7 +7,8 @@
 set -e
 
 # === 配置（按你的 ACR 实际情况修改） ===
-REGISTRY="registry.cn-beijing.aliyuncs.com"
+# 个人版 ACR 公网地址，从「实例信息」页复制
+REGISTRY="crpi-dsaw9owrbrng40lv.cn-beijing.personal.cr.aliyuncs.com"
 IMAGE_NAMESPACE="${IMAGE_NAMESPACE:-vben-xs}"   # 你的 ACR 命名空间
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 PLATFORM="linux/amd64"
