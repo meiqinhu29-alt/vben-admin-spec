@@ -2,51 +2,72 @@
 
 ## 部署方案
 
-**本地构建镜像 → 推送到阿里云 ACR → ECS 拉取镜像运行**
+**GitHub Actions 自动构建 → 推送阿里云 ACR → ECS 拉取镜像运行**
 
-优势：构建放在本地（无网络/编译环境问题），ECS 只负责拉镜像和运行，部署快且稳。
+代码 push 到 main 后，GitHub Actions 自动构建镜像并推到 ACR；ECS 只负责拉镜像和运行。所有网络/编译问题都在 CI 解决，部署快且稳。
 
-## 架构
+## 整体架构
 
 ```
-本地 Mac (ARM)                阿里云 ACR              阿里云 ECS (北京)
-│                              │                       │
-└─ docker buildx ──push────►   ├─ vben-admin-backend   │
-                               └─ vben-admin-frontend  └─ docker compose pull + up
-                                                          ├── Caddy (:80)
-                                                          ├── Frontend
-                                                          ├── Backend
-                                                          ├── PostgreSQL
-                                                          └── MinIO
+┌──────────┐   git push    ┌──────────┐   GitHub Actions   ┌─────────┐
+│ 本地 Mac │ ────────────▶ │  GitHub  │ ─────────────────▶ │   ACR   │
+└──────────┘    PR/main    └──────────┘   buildx 构建      │ 镜像仓库│
+                                          推送 latest+SHA  └────┬────┘
+                                                                │ pull (VPC 内网)
+                                                                ▼
+                                                        ┌──────────────┐
+                                                        │  阿里云 ECS  │
+                                                        │              │
+                                                        │ Caddy :80/443│
+                                                        │  ├─frontend  │
+                                                        │  │  └─/api/→ │
+                                                        │  └─backend   │
+                                                        │     ├─postgres│
+                                                        │     └─minio  │
+                                                        └──────────────┘
 ```
 
-## 前置准备
+## 关键文件
 
-### 1. 阿里云 ACR 个人版
+| 文件 | 用途 |
+|------|------|
+| `apps/backend/Dockerfile` | NestJS 镜像构建 |
+| `apps/web-naive/Dockerfile` | 前端 + nginx 镜像构建 |
+| `apps/web-naive/nginx.conf` | nginx 把 `/api/` 反代到 `backend:3100` |
+| `Caddyfile` | Caddy 把 80/443 流量转给 frontend |
+| `docker-compose.prod.yml` | 生产编排（5 个服务） |
+| `.env.production.example` | 配置模板（提交到 git） |
+| `.env.production` | 真实配置（**只在 ECS 上**，gitignore） |
+| `.github/workflows/build-and-push.yml` | CI 自动构建推 ACR |
+| `scripts/deploy/build-and-push.sh` | 本地手动构建推 ACR（备用） |
+| `scripts/deploy/pull-and-up.sh` | ECS 拉镜像启动 |
 
-1. 打开 [阿里云 ACR 控制台](https://cr.console.aliyun.com)
-2. 创建**个人版实例**（免费），区域选 **华北2（北京）** — 与 ECS 同地域
-3. 创建命名空间，例如 `xiaose`（这就是镜像前缀）
-4. 设置访问凭证：「访问凭证」→ 设置固定密码（用于 docker login）
-5. 创建两个镜像仓库：`vben-admin-backend`、`vben-admin-frontend`
+## 首次部署（一次性）
 
-镜像地址（个人版格式）：
+### 1. 阿里云 ACR
 
-- 公网（本地推送）：`crpi-<实例ID>.cn-beijing.personal.cr.aliyuncs.com/<namespace>/...`
-- 内网（ECS 拉取，免费）：`crpi-<实例ID>-vpc.cn-beijing.personal.cr.aliyuncs.com/<namespace>/...`
+1. [ACR 控制台](https://cr.console.aliyun.com) → 创建**个人版实例**（免费）→ 区域 **华北2（北京）**
+2. 创建命名空间 `vben-xs`
+3. 「访问凭证」→ 设置固定密码
+4. 不需要预先创建仓库 — push 时自动创建
 
-> 个人版每个用户有独立的 `crpi-<id>` 子域名，从 ACR 控制台「实例信息」复制。VPC 内网地址在「访问凭证」页面查看，如果没显示说明该地域暂未开通内网访问，用公网地址也行（会走公网带宽）。
+### 2. GitHub Secrets
 
-### 2. ECS 安装 Docker
+repo Settings → Secrets and variables → Actions，添加：
+
+| Name | Value |
+|------|-------|
+| `ACR_USERNAME` | ACR 访问凭证用户名（阿里云账号名） |
+| `ACR_PASSWORD` | ACR 固定密码 |
+
+### 3. ECS 准备
 
 ```bash
+# 装 Docker
 curl -fsSL https://get.docker.com | bash
 systemctl enable docker && systemctl start docker
-```
 
-阿里云 Docker 镜像配置：
-
-```bash
+# Docker 镜像加速（可选）
 mkdir -p /etc/docker
 cat > /etc/docker/daemon.json <<'EOF'
 {
@@ -58,68 +79,121 @@ EOF
 systemctl daemon-reload && systemctl restart docker
 ```
 
-## 首次部署
-
-### 在本地（Mac）：构建并推送镜像
+### 4. ECS 首次启动
 
 ```bash
-# 1. 编辑 build-and-push.sh，把 IMAGE_NAMESPACE 改成你的 ACR 命名空间
-# 或通过环境变量：
-IMAGE_NAMESPACE=xiaose bash scripts/deploy/build-and-push.sh
-```
-
-脚本会：
-
-- 自动创建 buildx builder
-- 跨平台编译 linux/amd64 镜像（Mac M 系列必须）
-- 登录 ACR（首次需输入用户名/密码）
-- 推送 backend + frontend 镜像
-
-首次构建 5-10 分钟。
-
-### 在 ECS 上：拉取并启动
-
-```bash
-# 1. 拉代码（仅为获取 docker-compose.prod.yml + Caddyfile + 脚本）
+# 拉代码（仅为获取 compose 文件 + Caddyfile + 脚本，不构建）
 git clone https://github.com/meiqinhu29-alt/vben-admin-spec.git
 cd vben-admin-spec
 
-# 2. 配置环境变量
+# 配置环境变量
 cp .env.production.example .env.production
 vi .env.production
-# 修改 IMAGE_NAMESPACE 为你的 ACR 命名空间
-
-# 3. 拉取镜像并启动
-bash scripts/deploy/pull-and-up.sh
-
-# 4. 首次部署初始化数据库
-docker compose -f docker-compose.prod.yml --env-file .env.production \
-  exec backend pnpm prisma db seed
 ```
 
-Seed 创建：
+`.env.production` 必须改的字段（用 `openssl rand` 生成）：
 
+```bash
+JWT_ACCESS_SECRET=$(openssl rand -hex 32)
+JWT_REFRESH_SECRET=$(openssl rand -hex 32)
+POSTGRES_PASSWORD=$(openssl rand -base64 24 | tr -d '=+/')
+MINIO_ROOT_PASSWORD=$(openssl rand -base64 24 | tr -d '=+/')
+```
+
+```bash
+# 登录 ACR（用 VPC 内网地址，免费且快）
+docker login crpi-dsaw9owrbrng40lv-vpc.cn-beijing.personal.cr.aliyuncs.com
+
+# 启动（首次会从 ACR 拉镜像）
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+
+# 初始化数据库
+docker compose -f docker-compose.prod.yml --env-file .env.production \
+  exec backend npx tsx prisma/seed.ts
+```
+
+Seed 会创建：
 - 5 个角色：admin / boss / finance / manager / staff
 - 完整菜单权限树 + authCode 按钮权限
-- 5 个默认账号，密码统一 `admin123`
+- 5 个默认账号（admin / boss / finance / manager / staff），密码统一 `admin123`
 
 ### 验证
 
-浏览器访问 `http://101.200.219.28`，使用 `admin / admin123` 登录。
+浏览器访问 ECS 公网 IP，用 `admin / admin123` 登录。**部署后请立即修改 admin 密码**。
 
-## 后续更新
+## 日常更新流程
 
-```bash
-# 本地：重新构建并推送（代码改动后）
-IMAGE_NAMESPACE=xiaose bash scripts/deploy/build-and-push.sh
+### 业务代码改动（前端 / 后端代码）
 
-# ECS：拉新镜像并重启
-cd vben-admin-spec
-git pull
-bash scripts/deploy/pull-and-up.sh
+```
+本地改代码 → git push 到 PR → 合并到 main
+   ↓
+GitHub Actions 自动构建（首次 5-10 分钟，缓存后 1-2 分钟）
+   ↓
+镜像推到 ACR：latest 和 commit SHA 双 tag
+   ↓
+ECS 上拉新镜像并重启
 ```
 
-> Prisma migrate deploy 已写在 backend 容器启动命令中，自动执行迁移。
+ECS 上的命令：
+
+```bash
+cd vben-admin-spec
+docker compose -f docker-compose.prod.yml --env-file .env.production pull
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+```
+
+> backend 容器启动时自动跑 `npx prisma migrate deploy`，schema 变更不用手动操作。
+
+### 配置改动（环境变量 / Caddy / compose）
+
+```
+ECS 上 vi .env.production / Caddyfile
+   ↓
+docker compose ... up -d   (会重建受影响的容器)
+```
+
+不需要拉新镜像。如果改的是仓库里的文件（`Caddyfile`、`docker-compose.prod.yml`），先在 ECS 上 `git pull`。
+
+### 数据库 schema 改动
+
+```
+本地：
+  pnpm prisma migrate dev --name xxx   # 生成 migration 文件
+  git commit + push
+   ↓
+GitHub Actions 构建新镜像（包含 migration 文件）
+   ↓
+ECS 上 pull + up -d
+   ↓
+backend 启动时自动 prisma migrate deploy
+```
+
+### 手动触发构建（绕过 push）
+
+GitHub repo → Actions → "Build and Push to ACR" → Run workflow。
+
+### 本地手动构建（CI 不可用时备用）
+
+```bash
+IMAGE_NAMESPACE=vben-xs bash scripts/deploy/build-and-push.sh
+```
+
+需要 Docker buildx，Mac M 系列会跨平台编译为 linux/amd64（比 GitHub runner 慢 2-3 倍）。
+
+## 应急回滚
+
+镜像在 ACR 里有 commit SHA tag，可以回滚到任意历史版本：
+
+```bash
+# ECS 上把 IMAGE_TAG 改成想回滚的 commit SHA
+echo "IMAGE_TAG=17901b4bb2f0237c7db7729ec8a99054b735ddcd" >> .env.production
+docker compose -f docker-compose.prod.yml --env-file .env.production up -d
+
+# 验证后改回 latest
+sed -i '/^IMAGE_TAG=/d' .env.production
+echo "IMAGE_TAG=latest" >> .env.production
+```
 
 ## 添加域名（HTTPS）
 
@@ -141,20 +215,29 @@ Caddy 自动申请 Let's Encrypt 证书并续期。
 ## 常用运维命令
 
 ```bash
-docker compose -f docker-compose.prod.yml ps                                    # 状态
-docker compose -f docker-compose.prod.yml logs -f backend                       # 日志
-docker compose -f docker-compose.prod.yml restart backend                       # 重启
-docker compose -f docker-compose.prod.yml exec postgres psql -U vben shop_bookkeeping  # DB
+# 状态
+docker compose -f docker-compose.prod.yml ps
+
+# 日志
+docker compose -f docker-compose.prod.yml logs -f backend
+docker compose -f docker-compose.prod.yml logs --tail 100 backend
+
+# 进容器调试
+docker compose -f docker-compose.prod.yml exec backend sh
+docker compose -f docker-compose.prod.yml exec postgres psql -U vben shop_bookkeeping
 
 # 备份数据库
 docker compose -f docker-compose.prod.yml exec postgres \
   pg_dump -U vben shop_bookkeeping > backup_$(date +%Y%m%d).sql
 
-# 完全停止（数据卷保留）
-docker compose -f docker-compose.prod.yml down
+# 单独重启某服务
+docker compose -f docker-compose.prod.yml --env-file .env.production restart backend
 
-# 完全清除（包括数据卷，慎用）
-docker compose -f docker-compose.prod.yml down -v
+# 完全停止（数据保留）
+docker compose -f docker-compose.prod.yml --env-file .env.production down
+
+# 完全清除（连数据卷一起，慎用）
+docker compose -f docker-compose.prod.yml --env-file .env.production down -v
 ```
 
 ## 默认账号
@@ -167,11 +250,11 @@ docker compose -f docker-compose.prod.yml down -v
 | manager | admin123 | 店长       | 所属店铺   |
 | staff   | admin123 | 员工       | 仅自己创建 |
 
-> 部署后请立即修改 admin 密码。
-
 ## 注意事项
 
 - **不要重复执行 seed**：seed 会清空所有数据再重建，仅首次部署执行一次
+- **JWT secret 必须改**：example 文件里的值已公开，不改等于没安全
 - **备份**：建议配置定时备份（crontab + pg_dump）
 - **内存**：全套服务约占 1-1.5GB，建议 ECS 至少 2GB
 - **磁盘**：建议 40GB+ 系统盘
+
