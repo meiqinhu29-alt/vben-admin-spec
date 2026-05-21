@@ -37,7 +37,6 @@ RUN pnpm build
 FROM node:22-alpine AS runtime
 WORKDIR /app
 
-RUN corepack enable && corepack prepare pnpm@latest --activate
 ENV NODE_ENV=production
 ENV PORT=3100
 
@@ -50,4 +49,4 @@ COPY --from=builder /app/packages/types ./packages/types
 
 WORKDIR /app/apps/backend
 EXPOSE 3100
-CMD ["sh", "-c", "pnpm prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
