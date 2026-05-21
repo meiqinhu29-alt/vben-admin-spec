@@ -3,6 +3,11 @@ WORKDIR /app
 
 # CI=true 让 prepare 脚本里的 is-ci 短路成功，跳过 lefthook git hook 安装
 ENV CI=true
+# bcrypt 二进制镜像（全量 install 会装到 backend 的 bcrypt）
+ENV npm_config_bcrypt_binary_host_mirror=https://registry.npmmirror.com/-/binary/bcrypt/
+
+# 原生模块编译工具链（兜底）
+RUN apk add --no-cache python3 make g++
 
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
