@@ -8,15 +8,9 @@ set -e
 
 # === 配置（按你的 ACR 实际情况修改） ===
 REGISTRY="registry.cn-beijing.aliyuncs.com"
-IMAGE_NAMESPACE="${IMAGE_NAMESPACE:-CHANGE_ME}"   # 你的 ACR 命名空间
+IMAGE_NAMESPACE="${IMAGE_NAMESPACE:-vben-xs}"   # 你的 ACR 命名空间
 IMAGE_TAG="${IMAGE_TAG:-latest}"
 PLATFORM="linux/amd64"
-
-if [ "$IMAGE_NAMESPACE" = "CHANGE_ME" ]; then
-  echo "错误: 请先设置 IMAGE_NAMESPACE 环境变量或修改脚本"
-  echo "用法: IMAGE_NAMESPACE=your-namespace bash $0"
-  exit 1
-fi
 
 BACKEND_IMAGE="${REGISTRY}/${IMAGE_NAMESPACE}/vben-admin-backend:${IMAGE_TAG}"
 FRONTEND_IMAGE="${REGISTRY}/${IMAGE_NAMESPACE}/vben-admin-frontend:${IMAGE_TAG}"
