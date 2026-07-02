@@ -3,6 +3,8 @@ import type { DailyReport } from '#/api/finance';
 
 import { computed, reactive, ref, watch } from 'vue';
 
+import { useAccess } from '@vben/access';
+
 import {
   NButton,
   NCard,
@@ -42,6 +44,8 @@ const emit = defineEmits<{
 }>();
 
 const message = useMessage();
+const { hasAccessByRoles } = useAccess();
+const isAdmin = computed(() => hasAccessByRoles(['admin']));
 const formRef = ref();
 const submitting = ref(false);
 const shopOptions = ref<{ label: string; value: string }[]>([]);
@@ -241,7 +245,12 @@ async function handleClose() {
     content-style="overflow-y: auto"
     @update:show="handleClose"
   >
-    <NCard size="small" class="formula-card" style="margin-bottom: 16px">
+    <NCard
+      v-if="isAdmin"
+      size="small"
+      class="formula-card"
+      style="margin-bottom: 16px"
+    >
       <div class="formula-block">
         <div class="formula-row">
           <span class="formula-target">实际业绩</span>
@@ -446,42 +455,6 @@ async function handleClose() {
           <NFormItem label="商场结算">
             <NInputNumber
               v-model:value="formModel.mallSettlement"
-              :precision="2"
-              style="width: 100%"
-            />
-          </NFormItem>
-        </NGi>
-        <NGi>
-          <NFormItem label="其他公司收入">
-            <NInputNumber
-              v-model:value="formModel.otherCompanyIncome"
-              :precision="2"
-              style="width: 100%"
-            />
-          </NFormItem>
-        </NGi>
-        <NGi>
-          <NFormItem label="公司转老板">
-            <NInputNumber
-              v-model:value="formModel.companyToOwner"
-              :precision="2"
-              style="width: 100%"
-            />
-          </NFormItem>
-        </NGi>
-        <NGi>
-          <NFormItem label="刷卡支付">
-            <NInputNumber
-              v-model:value="formModel.cardPayment"
-              :precision="2"
-              style="width: 100%"
-            />
-          </NFormItem>
-        </NGi>
-        <NGi>
-          <NFormItem label="公司奖金">
-            <NInputNumber
-              v-model:value="formModel.companyBonus"
               :precision="2"
               style="width: 100%"
             />

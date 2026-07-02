@@ -3,6 +3,8 @@ import type { DailyReport } from '#/api/finance';
 
 import { computed } from 'vue';
 
+import { useAccess } from '@vben/access';
+
 import { NCard, NGi, NGrid, NModal, NSpace, NTag } from 'naive-ui';
 
 import FieldAttachment from './field-attachment.vue';
@@ -18,6 +20,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:show': [value: boolean];
 }>();
+
+const { hasAccessByRoles } = useAccess();
+const isAdmin = computed(() => hasAccessByRoles(['admin']));
 
 const statusMap = {
   pending: { type: 'warning' as const, label: '未审' },
@@ -64,7 +69,12 @@ const attachmentFields = [
         <NTag :type="status.type" size="medium">{{ status.label }}</NTag>
       </div>
 
-      <NCard size="small" class="formula-card" style="margin-bottom: 16px">
+      <NCard
+        v-if="isAdmin"
+        size="small"
+        class="formula-card"
+        style="margin-bottom: 16px"
+      >
         <div class="formula-block">
           <div class="formula-row">
             <span class="formula-target">实际业绩</span>
@@ -140,32 +150,6 @@ const attachmentFields = [
             <div class="other-item">
               <span class="other-label">商场结算</span>
               <span class="other-value">{{ fmt(report.mallSettlement) }}</span>
-            </div>
-          </NGi>
-          <NGi>
-            <div class="other-item">
-              <span class="other-label">其他公司收入</span>
-              <span class="other-value">{{
-                fmt(report.otherCompanyIncome)
-              }}</span>
-            </div>
-          </NGi>
-          <NGi>
-            <div class="other-item">
-              <span class="other-label">公司转老板</span>
-              <span class="other-value">{{ fmt(report.companyToOwner) }}</span>
-            </div>
-          </NGi>
-          <NGi>
-            <div class="other-item">
-              <span class="other-label">刷卡支付</span>
-              <span class="other-value">{{ fmt(report.cardPayment) }}</span>
-            </div>
-          </NGi>
-          <NGi>
-            <div class="other-item">
-              <span class="other-label">公司奖金</span>
-              <span class="other-value">{{ fmt(report.companyBonus) }}</span>
             </div>
           </NGi>
         </NGrid>

@@ -2,11 +2,12 @@
 import type { DataTableColumns } from 'naive-ui';
 
 import type { DailyReport } from '#/api/finance';
+import type { Shop } from '#/api/system';
 
 import { computed, h, onMounted, reactive, ref } from 'vue';
 
-import { Page } from '@vben/common-ui';
 import { useAccess } from '@vben/access';
+import { Page } from '@vben/common-ui';
 
 import {
   NButton,
@@ -51,12 +52,31 @@ const canUnlock = computed(() => hasAccessByCodes(['report:unlock']));
 
 const loading = ref(false);
 const data = ref<DailyReport[]>([]);
-const pagination = reactive({ page: 1, pageSize: 20, itemCount: 0 });
+const pagination = reactive({ page: 1, pageSize: 100, itemCount: 0 });
 
 const shopOptions = ref<{ label: string; value: string }[]>([]);
+const shops = ref<Shop[]>([]);
 const filterShopIds = ref<string[]>([]);
 const filterStatuses = ref<string[]>([]);
-const filterDateRange = ref<[number, number] | null>(null);
+
+// 默认展示当月整月（1 号 ~ 月末），配合大分页一页看完整月
+function currentMonthRange(): [number, number] {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), 1);
+  const end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  return [start.getTime(), end.getTime()];
+}
+
+// 按本地时区格式化为 YYYY-MM-DD，避免 toISOString 的 UTC 偏移导致日期错位
+function toLocalDate(ts: number): string {
+  const d = new Date(ts);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+const filterDateRange = ref<[number, number] | null>(currentMonthRange());
 
 const showFormModal = ref(false);
 const editingReport = ref<DailyReport | null>(null);
@@ -75,6 +95,12 @@ const shopMap = computed(() => {
   return m;
 });
 
+const shopInfoMap = computed(() => {
+  const m: Record<string, Shop> = {};
+  for (const s of shops.value) m[s.id] = s;
+  return m;
+});
+
 const numericKeys: (keyof DailyReport)[] = [
   'openingBalance',
   'revenue',
@@ -84,7 +110,13 @@ const numericKeys: (keyof DailyReport)[] = [
   'depositToCompany',
   'shopExpense',
   'payToOwner',
+  'topupIncome',
+  'mallSettlement',
+  'otherCompanyIncome',
   'closingBalance',
+  'companyToOwner',
+  'cardPayment',
+  'companyBonus',
 ];
 
 const totals = computed(() => {
@@ -94,6 +126,19 @@ const totals = computed(() => {
   }
   return t;
 });
+
+// 表底黄色合计行（对应参考页底部汇总行）
+function summaryRow() {
+  const row: Record<string, any> = {};
+  for (const col of columns) {
+    const key = (col as any).key as string;
+    row[key] = numericKeys.includes(key as keyof DailyReport)
+      ? { value: totals.value[key]?.toFixed(2) ?? '0.00' }
+      : { value: '' };
+  }
+  row.brand = { value: '合计' };
+  return row;
+}
 
 async function fetchData() {
   loading.value = true;
@@ -107,12 +152,8 @@ async function fetchData() {
     if (filterStatuses.value.length > 0)
       params.statuses = filterStatuses.value.join(',');
     if (filterDateRange.value) {
-      params.dateFrom = new Date(filterDateRange.value[0])
-        .toISOString()
-        .slice(0, 10);
-      params.dateTo = new Date(filterDateRange.value[1])
-        .toISOString()
-        .slice(0, 10);
+      params.dateFrom = toLocalDate(filterDateRange.value[0]);
+      params.dateTo = toLocalDate(filterDateRange.value[1]);
     }
     const res = await listDailyReportsApi(params);
     data.value = res.items;
@@ -197,11 +238,19 @@ function handleRowClick(row: DailyReport) {
   showDetailModal.value = true;
 }
 
-function numCol(title: string, key: keyof DailyReport, width = 100) {
+function numCol(
+  title: string,
+  key: keyof DailyReport,
+  width = 100,
+  red = false,
+) {
   return {
-    title,
+    title: red
+      ? () => h('span', { class: 'col-red-title' }, title)
+      : title,
     key,
     width,
+    className: red ? 'col-red-cell' : undefined,
     render: (row: DailyReport) => Number(row[key]).toFixed(2),
     summary: () => totals.value[key as string]?.toFixed(2) ?? '',
   };
@@ -209,9 +258,21 @@ function numCol(title: string, key: keyof DailyReport, width = 100) {
 
 const columns: DataTableColumns<DailyReport> = [
   {
+    title: '品牌',
+    key: 'brand',
+    width: 90,
+    render: (row) => shopInfoMap.value[row.shopId]?.brand?.name ?? '-',
+  },
+  {
+    title: '店铺代码',
+    key: 'shopCode',
+    width: 90,
+    render: (row) => shopInfoMap.value[row.shopId]?.code ?? '-',
+  },
+  {
     title: '店铺名称',
     key: 'shopId',
-    width: 120,
+    width: 160,
     render: (row) => shopMap.value[row.shopId] ?? row.shopId,
   },
   {
@@ -227,8 +288,14 @@ const columns: DataTableColumns<DailyReport> = [
   numCol('刷给公司', 'transferToCompany'),
   numCol('转/存公司', 'depositToCompany'),
   numCol('店铺费用', 'shopExpense'),
-  numCol('交给老板', 'payToOwner'),
+  numCol('交给店老板款', 'payToOwner', 110, true),
+  numCol('充值收入', 'topupIncome'),
+  numCol('商场收款', 'mallSettlement', 100, true),
+  numCol('公司其它收入', 'otherCompanyIncome', 110),
   numCol('期末余额', 'closingBalance'),
+  numCol('公司转店老板', 'companyToOwner', 110, true),
+  numCol('刷卡收款', 'cardPayment', 100, true),
+  numCol('公司垫脚', 'companyBonus', 100, true),
   {
     title: '状态',
     key: 'status',
@@ -336,6 +403,7 @@ const columns: DataTableColumns<DailyReport> = [
 
 onMounted(async () => {
   const res = await listShopsApi({ pageSize: 200 });
+  shops.value = res.items;
   shopOptions.value = res.items.map((s) => ({ label: s.name, value: s.id }));
   fetchData();
 });
@@ -412,12 +480,13 @@ onMounted(async () => {
         :columns="columns"
         :data="data"
         :loading="loading"
+        :summary="summaryRow"
         :pagination="{
           page: pagination.page,
           pageSize: pagination.pageSize,
           itemCount: pagination.itemCount,
           showSizePicker: true,
-          pageSizes: [10, 20, 50, 100],
+          pageSizes: [31, 50, 100, 200],
           showQuickJumper: true,
           onUpdatePage: (p: number) => {
             pagination.page = p;
@@ -440,8 +509,9 @@ onMounted(async () => {
             },
           })
         "
-        scroll-x="1600"
+        scroll-x="2400"
         size="small"
+        class="daily-table"
       />
     </NSpace>
 
@@ -462,5 +532,22 @@ onMounted(async () => {
 <style scoped>
 .daily-table :deep(.n-data-table) {
   font-size: 13px;
+}
+
+/* 表底合计行：黄色高亮，对应参考页底部汇总条 */
+.daily-table :deep(.n-data-table-td--summary) {
+  font-weight: 700;
+  color: #000;
+  background-color: #ffd666 !important;
+}
+
+/* 敏感列表头：红底白字高亮（对应参考页红色表头列） */
+.daily-table :deep(th:has(.col-red-title)) {
+  background-color: #d03050 !important;
+}
+
+.daily-table :deep(.col-red-title) {
+  font-weight: 700;
+  color: #fff;
 }
 </style>
